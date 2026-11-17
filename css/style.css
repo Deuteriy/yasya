@@ -1,0 +1,96 @@
+/* ===== База ===== */
+:root {
+  --bg: #fff9f0;
+  --card: #ffffff;
+  --accent: #ffb344;
+  --accent-2: #4ecdc4;
+  --text: #4a3b2a;
+  --shadow: 0 6px 0 rgba(0, 0, 0, 0.12);
+  --radius: 24px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, "SF Pro Rounded", "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation; /* отключает двойной тап-зум */
+}
+
+/* ===== Хаб ===== */
+.hub {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: max(16px, env(safe-area-inset-top)) 24px max(16px, env(safe-area-inset-bottom));
+  gap: 16px;
+}
+
+.hub__title {
+  text-align: center;
+  font-size: clamp(28px, 5vmin, 44px);
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.hub__grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-auto-rows: auto;
+  gap: 20px;
+  align-content: center;
+}
+
+/* ===== Плитка игры ===== */
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 4px solid transparent;
+  font-size: clamp(18px, 3vmin, 26px);
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  aspect-ratio: 1;
+  max-height: 260px;
+}
+
+.tile:active {
+  transform: scale(0.94);
+}
+
+.tile__emoji {
+  font-size: clamp(40px, 8vmin, 72px);
+  line-height: 1;
+}
+
+.tile--colors {
+  background: linear-gradient(160deg, #ffe0b3, #ffb344);
+}
+
+.tile--soon {
+  opacity: 0.45;
+  filter: grayscale(0.8);
+}

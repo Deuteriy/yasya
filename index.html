@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <!-- iOS: запуск как приложение без панелей Safari -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Яся" />
+  <meta name="theme-color" content="#FFB344" />
+  <!-- Зум отключён: случайные щипки ребёнка не ломают интерфейс -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-180.png" />
+  <link rel="icon" href="assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="css/style.css" />
+  <title>Яся — игры</title>
+</head>
+<body>
+  <main class="hub">
+    <h1 class="hub__title">🌟 Игры Яси 🌟</h1>
+    <section class="hub__grid">
+      <a class="tile tile--colors" href="games/colors/index.html">
+        <span class="tile__emoji">🎨</span>
+        <span>Цвета</span>
+      </a>
+      <div class="tile tile--soon">
+        <span class="tile__emoji">🃏</span>
+        <span>Пары</span>
+      </div>
+      <div class="tile tile--soon">
+        <span class="tile__emoji">🔢</span>
+        <span>Счёт</span>
+      </div>
+      <div class="tile tile--soon">
+        <span class="tile__emoji">🐮</span>
+        <span>Звуки</span>
+      </div>
+      <div class="tile tile--soon">
+        <span class="tile__emoji">🧩</span>
+        <span>Пазлы</span>
+      </div>
+    </section>
+  </main>
+  <script src="js/core.js"></script>
+  <script src="js/hub.js"></script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Цвета</title>
+  <style>
+    .game {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 24px;
+    }
+    .game__title { font-size: clamp(24px, 5vmin, 40px); font-weight: 800; }
+    .game__hint  { font-size: clamp(16px, 3vmin, 24px); opacity: 0.7; }
+    .game__back  { font-size: 20px; text-decoration: none; color: var(--text); }
+  </style>
+</head>
+<body>
+  <!-- Заглушка: сама игра появится на этапе 3 -->
+  <main class="game">
+    <div class="game__title">🎨 Цвета</div>
+    <div class="game__hint">Скоро здесь появится игра!</div>
+    <a class="game__back" href="../../index.html">⬅️ Назад</a>
+  </main>
+</body>
+</html>
