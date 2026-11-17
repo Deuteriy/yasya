@@ -7,27 +7,77 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <link rel="stylesheet" href="../../css/style.css" />
   <title>Цвета</title>
-  <style>
-    .game {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 24px;
-      padding: 24px;
-    }
-    .game__title { font-size: clamp(24px, 5vmin, 40px); font-weight: 800; }
-    .game__hint  { font-size: clamp(16px, 3vmin, 24px); opacity: 0.7; }
-    .game__back  { font-size: 20px; text-decoration: none; color: var(--text); }
-  </style>
 </head>
 <body>
-  <!-- Заглушка: сама игра появится на этапе 3 -->
   <main class="game">
-    <div class="game__title">🎨 Цвета</div>
-    <div class="game__hint">Скоро здесь появится игра!</div>
-    <a class="game__back" href="../../index.html">⬅️ Назад</a>
+    <div class="game__top">
+      <a class="game__home" href="../../index.html" aria-label="Домой">🏠</a>
+      <button class="game__speak" id="say" aria-label="Повторить">🔊</button>
+    </div>
+    <h1 class="game__task" id="task"></h1>
+    <div class="game__stage">
+      <div class="balloons" id="row"></div>
+    </div>
   </main>
+  <script src="../../js/core.js"></script>
+  <script>
+    const COLORS = [
+      { name: 'красный', css: '#ff5a5f' },
+      { name: 'синий', css: '#4d96ff' },
+      { name: 'жёлтый', css: '#ffd93d' },
+      { name: 'зелёный', css: '#6bcb77' },
+      { name: 'оранжевый', css: '#ff9f43' },
+      { name: 'фиолетовый', css: '#c084fc' },
+    ];
+    const ROUNDS = 5;
+    let round = 0;
+    let phrase = '';
+
+    const taskEl = document.getElementById('task');
+    const rowEl = document.getElementById('row');
+
+    document.getElementById('say').addEventListener('click', () => speak(phrase));
+
+    function startRound() {
+      // сначала 2 варианта, со 3-го раунда — 3
+      const count = round < 2 ? 2 : 3;
+      const picks = shuffle(COLORS).slice(0, count);
+      const target = picks[Math.floor(Math.random() * picks.length)];
+
+      phrase = `Покажи ${target.name} шарик`;
+      taskEl.textContent = phrase;
+      speak(phrase);
+
+      rowEl.innerHTML = '';
+      shuffle(picks).forEach((c) => {
+        const b = document.createElement('button');
+        b.className = 'balloon';
+        b.style.background = c.css;
+        b.setAttribute('aria-label', c.name);
+        b.addEventListener('click', () => {
+          if (c === target) {
+            playSound('success');
+            b.classList.add('balloon--win');
+            round++;
+            setTimeout(() => {
+              round >= ROUNDS ? showWin({ onAgain: restart }) : startRound();
+            }, 850);
+          } else {
+            playSound('fail');
+            b.classList.add('shake');
+            setTimeout(() => b.classList.remove('shake'), 450);
+          }
+        });
+        rowEl.appendChild(b);
+      });
+    }
+
+    function restart() {
+      round = 0;
+      startRound();
+    }
+
+    startRound();
+  </script>
 </body>
 </html>

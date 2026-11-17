@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Пары</title>
+</head>
+<body>
+  <main class="game">
+    <div class="game__top">
+      <a class="game__home" href="../../index.html" aria-label="Домой">🏠</a>
+      <div class="game__hint">Найди одинаковых зверят</div>
+    </div>
+    <div class="game__stage">
+      <div class="cards" id="grid"></div>
+    </div>
+  </main>
+  <script src="../../js/core.js"></script>
+  <script>
+    const POOLS = [
+      ['🐶', '🐱', '🐰'],
+      ['🦊', '🐻', '🐼'],
+      ['🐷', '🐮', '🐸'],
+      ['🦁', '🐯', '🐵'],
+    ];
+    const NAMES = {
+      '🐶': 'собачка', '🐱': 'кошечка', '🐰': 'зайчик',
+      '🦊': 'лисёнок', '🐻': 'мишка', '🐼': 'панда',
+      '🐷': 'поросёнок', '🐮': 'корова', '🐸': 'лягушка',
+      '🦁': 'лев', '🐯': 'тигр', '🐵': 'обезьянка',
+    };
+
+    const grid = document.getElementById('grid');
+    let deck = [];
+    let first = null;
+    let lock = false;
+
+    function newGame() {
+      const pool = POOLS[Math.floor(Math.random() * POOLS.length)];
+      deck = shuffle([...pool, ...pool]).map((e) => ({ e, done: false }));
+      first = null;
+      lock = false;
+      render();
+    }
+
+    function render() {
+      grid.innerHTML = '';
+      deck.forEach((card, i) => {
+        const el = document.createElement('button');
+        el.className = 'card';
+        el.setAttribute('aria-label', 'карточка');
+        el.innerHTML = `
+          <div class="card__inner">
+            <div class="card__face card__back">🌟</div>
+            <div class="card__face card__front">${card.e}</div>
+          </div>`;
+        el.addEventListener('click', () => onCard(i, el));
+        grid.appendChild(el);
+      });
+    }
+
+    function onCard(i, el) {
+      if (lock || deck[i].done || el.classList.contains('is-open')) return;
+
+      el.classList.add('is-open');
+      playSound('pop');
+
+      if (!first) {
+        first = { i, el };
+        return;
+      }
+
+      if (deck[first.i].e === deck[i].e) {
+        // пара найдена
+        deck[i].done = deck[first.i].done = true;
+        el.classList.add('is-done');
+        first.el.classList.add('is-done');
+        playSound('success');
+        speak(NAMES[deck[i].e] || '');
+        first = null;
+        if (deck.every((c) => c.done)) {
+          setTimeout(() => showWin({ onAgain: newGame }), 700);
+        }
+      } else {
+        // не угадали — крышки обратно
+        lock = true;
+        playSound('fail');
+        const a = first.el;
+        const b = el;
+        first = null;
+        setTimeout(() => {
+          a.classList.remove('is-open');
+          b.classList.remove('is-open');
+          lock = false;
+        }, 800);
+      }
+    }
+
+    newGame();
+  </script>
+</body>
+</html>

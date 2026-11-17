@@ -1,5 +1,21 @@
 // ===== Общее ядро для всех игр =====
 
+// ===== Настройки =====
+const Settings = {
+  soundOn() {
+    try {
+      return localStorage.getItem('yasya.settings.sound') !== 'off';
+    } catch {
+      return true;
+    }
+  },
+  setSound(on) {
+    try {
+      localStorage.setItem('yasya.settings.sound', on ? 'on' : 'off');
+    } catch {}
+  },
+};
+
 // iOS блокирует звук до первого пользовательского касания.
 // AudioContext создаём лениво и возобновляем на первом тапе.
 let _audioCtx = null;
@@ -25,8 +41,9 @@ function getAudioCtx() {
   window.addEventListener('mousedown', unlock);
 })();
 
-// Простой тон-звук без внешних файлов: type 'pop' | 'success' | 'fail'
+// Простой тон-звук без внешних файлов: kind 'pop' | 'success' | 'fail'
 function playSound(kind = 'pop') {
+  if (!Settings.soundOn()) return;
   try {
     const ctx = getAudioCtx();
     const osc = ctx.createOscillator();
@@ -36,16 +53,13 @@ function playSound(kind = 'pop') {
 
     const now = ctx.currentTime;
     if (kind === 'success') {
-      // бодрая восходящая арпеджио-фраза
-      const notes = [523.25, 659.25, 783.99]; // C5 E5 G5
+      // бодрая восходящая фраза C5-E5-G5
+      const notes = [523.25, 659.25, 783.99];
       notes.forEach((freq, i) => {
         const t = now + i * 0.12;
         osc.frequency.setValueAtTime(freq, t);
-        gain.gain.setValueAtTime(0.25, t);
+        gain.gain.setValueAtTime(0.22, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-        if (i < notes.length - 1) {
-          osc.frequency.setValueAtTime(freq, t);
-        }
       });
       osc.start(now);
       osc.stop(now + notes.length * 0.12 + 0.35);
@@ -73,7 +87,22 @@ function playSound(kind = 'pop') {
   }
 }
 
-// Сохранение прогресса в localStorage (ключи вида yasya.<game>.<key>)
+// ===== Речь (озвучка заданий; на iOS тоже требует первого касания) =====
+function speak(text) {
+  if (!Settings.soundOn() || !text) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ru-RU';
+    u.rate = 0.9;
+    u.pitch = 1.05;
+    speechSynthesis.speak(u);
+  } catch (e) {
+    console.warn('tts:', e);
+  }
+}
+
+// ===== Сохранение прогресса (ключи вида yasya.<game>.<key>) =====
 const Progress = {
   get(game, key, def = 0) {
     try {
@@ -91,7 +120,63 @@ const Progress = {
       return 0;
     }
   },
+  reset() {
+    try {
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith('yasya.'))
+        .forEach((k) => localStorage.removeItem(k));
+    } catch {}
+  },
 };
+
+// ===== Праздник: конфетти + экран победы =====
+function confetti() {
+  const colors = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#c084fc', '#ff9f43'];
+  for (let i = 0; i < 36; i++) {
+    const p = document.createElement('i');
+    p.className = 'confetti';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.background = colors[i % colors.length];
+    p.style.animationDelay = Math.random() * 0.6 + 's';
+    p.style.animationDuration = 2 + Math.random() * 1.5 + 's';
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 4200);
+  }
+}
+
+// Показать экран победы; onAgain — перезапуск игры
+function showWin({ homeUrl = '../../index.html', onAgain } = {}) {
+  const stars = Progress.add('global', 'stars', 1);
+  playSound('success');
+  confetti();
+
+  const over = document.createElement('div');
+  over.className = 'win';
+  over.innerHTML = `
+    <div class="win__card">
+      <div class="win__emoji">🏆</div>
+      <div class="win__title">Молодец!</div>
+      <div class="win__stars">⭐ всего: ${stars}</div>
+      <button class="btn win__btn">🔁 Ещё раз</button>
+      <a class="btn win__btn" href="${homeUrl}">🏠 Домой</a>
+    </div>`;
+  document.body.appendChild(over);
+
+  over.querySelector('.win__btn').addEventListener('click', () => {
+    over.remove();
+    if (onAgain) onAgain();
+  });
+}
+
+// ===== Утилита =====
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 // Service Worker: офлайн-режим после первой загрузки.
 // Путь считаем от src этого скрипта (js/core.js) — работает с любой глубины страниц.

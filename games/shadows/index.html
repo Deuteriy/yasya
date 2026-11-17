@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Тени</title>
+</head>
+<body>
+  <main class="game">
+    <div class="game__top">
+      <a class="game__home" href="../../index.html" aria-label="Домой">🏠</a>
+      <button class="game__speak" id="say" aria-label="Повторить">🔊</button>
+    </div>
+    <h1 class="game__task" id="task">Найди такую же</h1>
+    <div class="game__stage">
+      <div class="shadow-wrap">
+        <div class="shadow-card"><span id="sil"></span></div>
+        <div class="options" id="opts"></div>
+      </div>
+    </div>
+  </main>
+  <script src="../../js/core.js"></script>
+  <script>
+    // эмодзи с сильно разными силуэтами — иначе ребёнку не различить
+    const ITEMS = ['🍎', '🍌', '🍇', '🍓', '🐞', '🐟', '🐸', '🦋', '🌻', '🚗', '✈️', '🚀', '🐻', '🦆'];
+    const ROUNDS = 5;
+    let round = 0;
+    const phrase = 'Найди такую же картинку';
+
+    document.getElementById('say').addEventListener('click', () => speak(phrase));
+
+    function startRound() {
+      const picks = shuffle(ITEMS).slice(0, 3);
+      const target = picks[Math.floor(Math.random() * picks.length)];
+
+      speak(phrase);
+
+      document.getElementById('sil').textContent = target;
+
+      const opts = document.getElementById('opts');
+      opts.innerHTML = '';
+      shuffle(picks).forEach((item) => {
+        const b = document.createElement('button');
+        b.className = 'opt';
+        b.textContent = item;
+        b.setAttribute('aria-label', 'вариант');
+        b.addEventListener('click', () => {
+          if (item === target) {
+            playSound('success');
+            round++;
+            setTimeout(() => {
+              round >= ROUNDS ? showWin({ onAgain: restart }) : startRound();
+            }, 850);
+          } else {
+            playSound('fail');
+            b.classList.add('shake');
+            setTimeout(() => b.classList.remove('shake'), 450);
+          }
+        });
+        opts.appendChild(b);
+      });
+    }
+
+    function restart() {
+      round = 0;
+      startRound();
+    }
+
+    startRound();
+  </script>
+</body>
+</html>

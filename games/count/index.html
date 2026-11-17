@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Счёт</title>
+</head>
+<body>
+  <main class="game">
+    <div class="game__top">
+      <a class="game__home" href="../../index.html" aria-label="Домой">🏠</a>
+      <button class="game__speak" id="say" aria-label="Повторить">🔊</button>
+    </div>
+    <h1 class="game__task" id="task">Сколько их?</h1>
+    <div class="game__stage">
+      <div class="count-wrap">
+        <div class="count-items" id="items"></div>
+        <div class="digits" id="digits"></div>
+      </div>
+    </div>
+  </main>
+  <script src="../../js/core.js"></script>
+  <script>
+    const TYPES = ['🦆', '🐟', '🍎', '🎈', '🚗', '🐝'];
+    const ROUNDS = 5;
+    let round = 0;
+    const phrase = 'Посчитай и покажи число';
+
+    document.getElementById('say').addEventListener('click', () => speak(phrase));
+
+    function startRound() {
+      const emoji = TYPES[Math.floor(Math.random() * TYPES.length)];
+      const n = 1 + Math.floor(Math.random() * 5); // 1..5
+
+      speak(phrase);
+
+      const items = document.getElementById('items');
+      items.innerHTML = '';
+      for (let i = 0; i < n; i++) {
+        const s = document.createElement('span');
+        s.className = 'count-item';
+        s.textContent = emoji;
+        items.appendChild(s);
+      }
+
+      // правильная цифра + две других из 1..5
+      const options = shuffle([n, ...shuffle([1, 2, 3, 4, 5].filter((v) => v !== n)).slice(0, 2)]);
+
+      const digits = document.getElementById('digits');
+      digits.innerHTML = '';
+      options.forEach((v) => {
+        const b = document.createElement('button');
+        b.className = 'digit';
+        b.textContent = v;
+        b.addEventListener('click', () => {
+          if (v === n) {
+            playSound('success');
+            speak(String(n));
+            round++;
+            setTimeout(() => {
+              round >= ROUNDS ? showWin({ onAgain: restart }) : startRound();
+            }, 850);
+          } else {
+            playSound('fail');
+            b.classList.add('shake');
+            setTimeout(() => b.classList.remove('shake'), 450);
+          }
+        });
+        digits.appendChild(b);
+      });
+    }
+
+    function restart() {
+      round = 0;
+      startRound();
+    }
+
+    startRound();
+  </script>
+</body>
+</html>

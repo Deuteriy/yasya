@@ -16,11 +16,6 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-html,
-body {
-  height: 100%;
-}
-
 body {
   font-family: -apple-system, "SF Pro Rounded", "Segoe UI", sans-serif;
   background: var(--bg);
@@ -28,12 +23,18 @@ body {
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none; /* без системного меню на долгом нажатии */
   touch-action: manipulation; /* отключает двойной тап-зум */
+}
+
+.hub,
+.game {
+  height: 100vh;
+  height: 100dvh;
 }
 
 /* ===== Хаб ===== */
 .hub {
-  height: 100%;
   display: flex;
   flex-direction: column;
   padding: max(16px, env(safe-area-inset-top)) 24px max(16px, env(safe-area-inset-bottom));
@@ -89,8 +90,482 @@ body {
 .tile--colors {
   background: linear-gradient(160deg, #ffe0b3, #ffb344);
 }
+.tile--memory {
+  background: linear-gradient(160deg, #b3e0ff, #4d96ff);
+}
+.tile--count {
+  background: linear-gradient(160deg, #c8f0c8, #6bcb77);
+}
+.tile--sounds {
+  background: linear-gradient(160deg, #ffd1e8, #ff8fc7);
+}
+.tile--shadows {
+  background: linear-gradient(160deg, #dfe6f0, #9fb3c8);
+}
 
-.tile--soon {
-  opacity: 0.45;
-  filter: grayscale(0.8);
+/* ===== Общий каркас игры ===== */
+.game {
+  display: flex;
+  flex-direction: column;
+  padding: max(12px, env(safe-area-inset-top)) 22px max(12px, env(safe-area-inset-bottom));
+}
+
+.game__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 52px;
+}
+
+.game__home {
+  font-size: 34px;
+  text-decoration: none;
+  padding: 4px 10px;
+}
+
+.game__speak {
+  font-size: 30px;
+  background: none;
+  border: none;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.game__task {
+  text-align: center;
+  font-size: clamp(22px, 4.5vmin, 36px);
+  font-weight: 800;
+  margin: 4px 0;
+}
+
+.game__hint {
+  text-align: center;
+  opacity: 0.6;
+  font-size: clamp(15px, 2.6vmin, 20px);
+}
+
+.game__stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== Кнопки ===== */
+.btn {
+  display: inline-block;
+  border: none;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--shadow);
+  font: inherit;
+  font-weight: 800;
+  padding: 14px 24px;
+  font-size: clamp(18px, 3vmin, 24px);
+  color: var(--text);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
+
+/* ===== Игра «Цвета»: шарики ===== */
+.balloons {
+  display: flex;
+  gap: 7vmin;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.balloon {
+  width: clamp(90px, 19vmin, 160px);
+  aspect-ratio: 0.86;
+  border-radius: 50% 50% 50% 50% / 44% 44% 56% 56%;
+  box-shadow: inset -12px -16px 0 rgba(0, 0, 0, 0.08);
+  position: relative;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.balloon::after {
+  /* хвостик шарика */
+  content: "";
+  position: absolute;
+  bottom: -12%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16%;
+  height: 14%;
+  background: inherit;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.balloon:active {
+  transform: scale(0.93);
+}
+
+.balloon--win {
+  animation: flyaway 0.7s ease-in forwards;
+}
+
+@keyframes flyaway {
+  to {
+    transform: translateY(-110vh) rotate(25deg);
+    opacity: 0;
+  }
+}
+
+/* ===== Тряска при ошибке ===== */
+.shake {
+  animation: shake 0.4s;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  75% {
+    transform: translateX(10px);
+  }
+}
+
+/* ===== Игра «Пары»: карточки ===== */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  width: min(92vw, 560px);
+}
+
+.card {
+  aspect-ratio: 3 / 4;
+  perspective: 600px;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.card__inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.4s;
+}
+
+.card.is-open .card__inner {
+  transform: rotateY(180deg);
+}
+
+.card__face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+}
+
+.card__back {
+  background: linear-gradient(160deg, #7ec8ff, #4d96ff);
+  font-size: clamp(28px, 6vmin, 44px);
+}
+
+.card__front {
+  background: #fff;
+  transform: rotateY(180deg);
+  font-size: clamp(40px, 9vmin, 72px);
+}
+
+.card.is-done .card__front {
+  background: #e8fbf0;
+  box-shadow: 0 0 0 5px #6bcb77 inset;
+}
+
+/* ===== Игра «Счёт» ===== */
+.count-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 7vmin;
+  align-items: center;
+}
+
+.count-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3vmin;
+  justify-content: center;
+  max-width: 80vw;
+}
+
+.count-item {
+  font-size: clamp(46px, 11vmin, 90px);
+  animation: bob 2s ease-in-out infinite;
+}
+
+.count-item:nth-child(2n) {
+  animation-delay: 0.3s;
+}
+
+.count-item:nth-child(3n) {
+  animation-delay: 0.6s;
+}
+
+@keyframes bob {
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.digits {
+  display: flex;
+  gap: 4vmin;
+}
+
+.digit {
+  width: clamp(72px, 15vmin, 130px);
+  aspect-ratio: 1;
+  border-radius: 24px;
+  font-size: clamp(36px, 8vmin, 64px);
+  font-weight: 800;
+  background: #fff;
+  box-shadow: var(--shadow);
+  border: none;
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.digit:active {
+  transform: scale(0.93);
+}
+
+/* ===== Игра «Звуки»: звери ===== */
+.zoo {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  width: min(94vw, 720px);
+}
+
+.animal {
+  aspect-ratio: 1;
+  border-radius: 22px;
+  border: none;
+  background: #fff;
+  box-shadow: var(--shadow);
+  font-size: clamp(40px, 9vmin, 80px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.animal small {
+  font-size: clamp(12px, 2.2vmin, 18px);
+  font-weight: 700;
+  color: var(--text);
+  opacity: 0.7;
+  font-family: inherit;
+}
+
+.animal.is-heard {
+  box-shadow: var(--shadow), 0 0 0 4px var(--accent-2) inset;
+}
+
+.animal:active {
+  transform: scale(0.94);
+}
+
+/* ===== Игра «Тени» ===== */
+.shadow-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 7vmin;
+  align-items: center;
+}
+
+.shadow-card {
+  width: clamp(140px, 30vmin, 240px);
+  aspect-ratio: 1;
+  background: #fff;
+  border-radius: 26px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(80px, 18vmin, 150px);
+}
+
+.shadow-card span {
+  filter: brightness(0) opacity(0.82);
+}
+
+.options {
+  display: flex;
+  gap: 5vmin;
+}
+
+.opt {
+  width: clamp(96px, 18vmin, 150px);
+  aspect-ratio: 1;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: var(--shadow);
+  border: none;
+  font-size: clamp(44px, 10vmin, 76px);
+  cursor: pointer;
+}
+
+.opt:active {
+  transform: scale(0.93);
+}
+
+/* ===== Экран победы ===== */
+.win {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 249, 240, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  animation: fadein 0.3s;
+}
+
+.win__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.win__emoji {
+  font-size: clamp(80px, 20vmin, 160px);
+  animation: bounce 1s ease-in-out infinite;
+}
+
+.win__title {
+  font-size: clamp(34px, 7vmin, 56px);
+  font-weight: 800;
+}
+
+.win__stars {
+  font-size: clamp(20px, 4vmin, 30px);
+  font-weight: 700;
+}
+
+.win__btn {
+  min-width: 230px;
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes bounce {
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+.confetti {
+  position: fixed;
+  top: -20px;
+  width: 12px;
+  height: 18px;
+  border-radius: 3px;
+  z-index: 51;
+  pointer-events: none;
+  animation: fall linear forwards;
+}
+
+@keyframes fall {
+  to {
+    transform: translateY(112vh) rotate(720deg);
+  }
+}
+
+/* ===== Родительская панель ===== */
+.panel {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+
+.panel__card {
+  background: #fff;
+  border-radius: 26px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(88vw, 420px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.panel__title {
+  font-size: 22px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.panel__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.switch {
+  width: 64px;
+  height: 36px;
+  border-radius: 18px;
+  background: #ccc;
+  position: relative;
+  border: none;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left 0.2s;
+}
+
+.switch.on {
+  background: var(--accent-2);
+}
+
+.switch.on::after {
+  left: 32px;
 }

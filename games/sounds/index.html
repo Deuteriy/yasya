@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Звуки</title>
+</head>
+<body>
+  <main class="game">
+    <div class="game__top">
+      <a class="game__home" href="../../index.html" aria-label="Домой">🏠</a>
+      <div class="game__hint">Кто как говорит?</div>
+    </div>
+    <div class="game__stage">
+      <div class="zoo" id="zoo"></div>
+    </div>
+  </main>
+  <script src="../../js/core.js"></script>
+  <script>
+    const ANIMALS = [
+      { e: '🐄', name: 'Корова' },
+      { e: '🐕', name: 'Собака' },
+      { e: '🐈', name: 'Кошка' },
+      { e: '🦆', name: 'Утка' },
+      { e: '🐑', name: 'Овечка' },
+      { e: '🐖', name: 'Поросёнок' },
+      { e: '🐸', name: 'Лягушка' },
+      { e: '🐝', name: 'Пчела' },
+    ];
+
+    // ===== Мини-синтезатор звериных голосов =====
+    // tone: осциллятор с глиссандо f0→f1 и огибающей; noise: шумовой всплеск
+    function tone(type, f0, f1, t0, dur, vol, lowpass) {
+      const ctx = getAudioCtx();
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      const start = ctx.currentTime + t0;
+      osc.type = type;
+      osc.frequency.setValueAtTime(f0, start);
+      if (f1 && f1 !== f0) osc.frequency.exponentialRampToValueAtTime(f1, start + dur);
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(vol, start + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      let node = osc;
+      if (lowpass) {
+        const f = ctx.createBiquadFilter();
+        f.type = 'lowpass';
+        f.frequency.value = lowpass;
+        osc.connect(f);
+        node = f;
+      }
+      node.connect(g);
+      g.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + dur + 0.05);
+    }
+
+    function noise(t0, dur, vol, lowpass) {
+      const ctx = getAudioCtx();
+      const len = Math.floor(ctx.sampleRate * dur);
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const f = ctx.createBiquadFilter();
+      f.type = 'lowpass';
+      f.frequency.value = lowpass;
+      const g = ctx.createGain();
+      const start = ctx.currentTime + t0;
+      g.gain.setValueAtTime(vol, start);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      src.connect(f);
+      f.connect(g);
+      g.connect(ctx.destination);
+      src.start(start);
+    }
+
+    const FX = {
+      Корова: () => {
+        tone('sawtooth', 98, 122, 0, 0.5, 0.25, 320);  // му-у-у
+        tone('sawtooth', 122, 85, 0.55, 0.6, 0.22, 300);
+      },
+      Собака: () => {
+        noise(0, 0.12, 0.28, 900);                      // гав-гав
+        tone('square', 175, 120, 0, 0.13, 0.16, 900);
+        noise(0.22, 0.12, 0.28, 900);
+        tone('square', 185, 125, 0.22, 0.13, 0.16, 900);
+      },
+      Кошка: () => {
+        tone('sine', 620, 900, 0, 0.28, 0.2);           // мяу
+        tone('sine', 880, 370, 0.3, 0.42, 0.18);
+      },
+      Утка: () => {
+        for (let i = 0; i < 3; i++) tone('square', 330, 250, i * 0.16, 0.1, 0.11, 1500); // кря-кря
+      },
+      Овечка: () => {
+        tone('triangle', 300, 282, 0, 0.9, 0.18, 900);  // бе-е-е
+      },
+      Поросёнок: () => {
+        for (let i = 0; i < 3; i++) tone('square', 115, 80, i * 0.18, 0.12, 0.2, 500); // хрю-хрю
+      },
+      Лягушка: () => {
+        tone('sawtooth', 140, 108, 0, 0.14, 0.2, 600);  // ква-ква
+        tone('sawtooth', 132, 100, 0.2, 0.14, 0.2, 600);
+      },
+      Пчела: () => {
+        tone('sawtooth', 240, 232, 0, 1.1, 0.11, 1400); // жжж
+      },
+    };
+
+    // ===== Сетка зверей =====
+    const zoo = document.getElementById('zoo');
+    const heard = new Set();
+
+    ANIMALS.forEach((a) => {
+      const b = document.createElement('button');
+      b.className = 'animal';
+      b.innerHTML = `${a.e}<small>${a.name}</small>`;
+      b.addEventListener('click', () => {
+        if (Settings.soundOn()) FX[a.name]();
+        speak(a.name);
+        heard.add(a.name);
+        b.classList.add('is-heard');
+        if (heard.size === ANIMALS.length) {
+          // всех послушали — праздник; потом начинаем заново
+          setTimeout(() => {
+            showWin({
+              onAgain: () => {
+                heard.clear();
+                zoo.querySelectorAll('.animal').forEach((el) => el.classList.remove('is-heard'));
+              },
+            });
+          }, 900);
+        }
+      });
+      zoo.appendChild(b);
+    });
+  </script>
+</body>
+</html>
