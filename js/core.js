@@ -47,17 +47,31 @@ function getAudioCtx() {
   const unlock = () => {
     getAudioCtx();
     window.removeEventListener('touchstart', unlock);
+    window.removeEventListener('pointerdown', unlock);
     window.removeEventListener('mousedown', unlock);
   };
   window.addEventListener('touchstart', unlock, { passive: true });
+  window.addEventListener('pointerdown', unlock, { passive: true });
   window.addEventListener('mousedown', unlock);
 })();
 
+// iOS: контекст может «засыпать» (например, после синтеза речи, который
+// перехватывает аудиосессию) — перед каждым звуком убеждаемся, что он запущен.
+async function ensureAudio() {
+  const ctx = getAudioCtx();
+  if (ctx.state !== 'running') {
+    try {
+      await ctx.resume();
+    } catch {}
+  }
+  return ctx;
+}
+
 // Простой тон-звук без внешних файлов: kind 'pop' | 'success' | 'fail'
-function playSound(kind = 'pop') {
+async function playSound(kind = 'pop') {
   if (!Settings.soundOn()) return;
   try {
-    const ctx = getAudioCtx();
+    const ctx = await ensureAudio();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);

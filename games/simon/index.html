@@ -37,10 +37,11 @@
     const simon = document.getElementById('simon');
     const padEls = [];
 
-    function tone(freq) {
+    async function tone(freq) {
       if (!Settings.soundOn()) return;
       try {
-        const ctx = getAudioCtx();
+        // на iPad контекст может спать после озвучки — будим внутри нажатия
+        const ctx = await ensureAudio();
         const osc = ctx.createOscillator();
         const g = ctx.createGain();
         const t = ctx.currentTime;
