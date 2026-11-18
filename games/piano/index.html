@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Пианино</title>
+</head>
+<body>
+  <main class="game">
+    <div class="game__top">
+      <a class="game__home" href="../../index.html" aria-label="Домой">🏠</a>
+      <button class="game__speak" id="song" aria-label="Сыграть мелодию">🎶</button>
+    </div>
+    <h1 class="game__task">Пианино</h1>
+    <div class="game__stage">
+      <div class="piano-wrap">
+        <div class="piano" id="piano"></div>
+        <div class="game__hint">Нажми все клавиши — будет праздник!</div>
+      </div>
+    </div>
+  </main>
+  <script src="../../js/core.js"></script>
+  <script>
+    const NOTES = [
+      { n: 'До', f: 261.63, c1: '#ff8f85', c2: '#ff5a5f' },
+      { n: 'Ре', f: 293.66, c1: '#ffc08a', c2: '#ff9f43' },
+      { n: 'Ми', f: 329.63, c1: '#ffe9a0', c2: '#ffd93d' },
+      { n: 'Фа', f: 349.23, c1: '#b3ecab', c2: '#6bcb77' },
+      { n: 'Соль', f: 392.0,  c1: '#a3ece5', c2: '#4ecdc4' },
+      { n: 'Ля', f: 440.0,  c1: '#a3c6ff', c2: '#4d96ff' },
+      { n: 'Си', f: 493.88, c1: '#dcc2ff', c2: '#c084fc' },
+      { n: 'До', f: 523.25, c1: '#ffc3e2', c2: '#ff8fc7' },
+    ];
+    const keys = [];
+    const pressed = new Set();
+    let won = false;
+    let playing = false;
+
+    const piano = document.getElementById('piano');
+
+    function tone(freq) {
+      if (!Settings.soundOn()) return;
+      try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        const t = ctx.currentTime;
+        osc.type = 'triangle';
+        osc.frequency.value = freq;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.35, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.8);
+        osc.connect(g);
+        g.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.85);
+      } catch {}
+    }
+
+    function noteFly(key) {
+      const fly = document.createElement('i');
+      fly.className = 'note-fly';
+      fly.textContent = Math.random() < 0.5 ? '🎵' : '🎶';
+      const r = key.getBoundingClientRect();
+      const pr = piano.getBoundingClientRect();
+      fly.style.left = r.left - pr.left + r.width / 2 + 'px';
+      fly.style.top = r.top - pr.top + 'px';
+      piano.appendChild(fly);
+      setTimeout(() => fly.remove(), 900);
+    }
+
+    function press(i) {
+      const key = keys[i];
+      key.classList.add('lit');
+      setTimeout(() => key.classList.remove('lit'), 220);
+      tone(NOTES[i].f);
+      noteFly(key);
+      pressed.add(i);
+      if (!won && pressed.size === NOTES.length) {
+        won = true;
+        setTimeout(() => showWin({
+          onAgain: () => {
+            pressed.clear();
+            won = false;
+          },
+        }), 600);
+      }
+    }
+
+    NOTES.forEach((nt, i) => {
+      const b = document.createElement('button');
+      b.className = 'piano__key';
+      b.style.background = `linear-gradient(180deg, ${nt.c1}, ${nt.c2})`;
+      b.innerHTML = `<small>${nt.n}</small>`;
+      b.addEventListener('pointerdown', () => {
+        if (playing) return;
+        press(i);
+      });
+      piano.appendChild(b);
+      keys.push(b);
+    });
+
+    // «Ёлочка»-простая мелодия: до до соль соль ля ля соль / фа фа ми ми ре ре до
+    const MELODY = [0, 0, 4, 4, 5, 5, 4, 3, 3, 2, 2, 1, 1, 0];
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    document.getElementById('song').addEventListener('click', async () => {
+      if (playing) return;
+      playing = true;
+      for (const i of MELODY) {
+        const key = keys[i];
+        key.classList.add('lit');
+        tone(NOTES[i].f);
+        noteFly(key);
+        await sleep(340);
+        key.classList.remove('lit');
+        await sleep(90);
+      }
+      playing = false;
+    });
+
+    showStart({ emoji: '🎹', label: '▶ Играть', onStart: () => speak('Поиграй на пианино') });
+  </script>
+</body>
+</html>

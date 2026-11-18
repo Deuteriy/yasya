@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Кто сказал?</title>
+</head>
+<body>
+  <main class="game">
+    <div class="game__top">
+      <a class="game__home" href="../../index.html" aria-label="Домой">🏠</a>
+      <button class="game__speak" id="say" aria-label="Повторить звук">🔊</button>
+    </div>
+    <h1 class="game__task">Кто сказал?</h1>
+    <div class="game__stage">
+      <div class="whosaid-row" id="row"></div>
+    </div>
+  </main>
+  <script src="../../js/core.js"></script>
+  <script>
+    // тот же зверинец, что в «Звуках»
+    const ANIMALS = [
+      { e: '🐄', name: 'Корова', file: 'cow' },
+      { e: '🐕', name: 'Собака', file: 'dog' },
+      { e: '🐈', name: 'Кошка', file: 'cat' },
+      { e: '🐑', name: 'Овечка', file: 'sheep' },
+      { e: '🐖', name: 'Поросёнок', file: 'pig' },
+      { e: '🐴', name: 'Лошадь', file: 'horse' },
+      { e: '🐓', name: 'Петух', file: 'rooster' },
+      { e: '🐔', name: 'Курочка', file: 'chicken' },
+      { e: '🐐', name: 'Коза', file: 'goat' },
+      { e: '🐝', name: 'Пчела', file: 'bee' },
+      { e: '🐺', name: 'Волк', file: 'wolf' },
+      { e: '🦁', name: 'Лев', file: 'lion' },
+      { e: '🐵', name: 'Обезьянка', file: 'monkey' },
+      { e: '🦇', name: 'Летучая мышка', file: 'bat' },
+      { e: '🐦', name: 'Птичка', file: 'bird' },
+      { e: '🐍', name: 'Змея', file: 'snake' },
+    ];
+    const ROUNDS = 5;
+    let round = 0;
+    let answer = null;
+    let currentAudio = null;
+
+    const rowEl = document.getElementById('row');
+
+    function playWav(file) {
+      if (!Settings.soundOn()) return;
+      if (currentAudio) currentAudio.pause();
+      const audio = new Audio(`../../assets/sounds/${file}.wav`);
+      currentAudio = audio;
+      audio.play().catch(() => {});
+    }
+
+    document.getElementById('say').addEventListener('click', () => {
+      if (answer) playWav(answer.file);
+    });
+
+    function startRound() {
+      speak('Кто сказал?');
+      const picks = shuffle(ANIMALS).slice(0, 3);
+      answer = picks[Math.floor(Math.random() * picks.length)];
+      setTimeout(() => playWav(answer.file), 600);
+
+      rowEl.innerHTML = '';
+      picks.forEach((a) => {
+        const b = document.createElement('button');
+        b.className = 'animal';
+        b.innerHTML = `${a.e}<small>${a.name}</small>`;
+        b.addEventListener('click', () => {
+          if (a === answer) {
+            playSound('success');
+            speak(a.name);
+            round++;
+            setTimeout(() => {
+              round >= ROUNDS ? showWin({ onAgain: restart }) : startRound();
+            }, 1000);
+          } else {
+            playSound('fail');
+            b.classList.add('shake');
+            setTimeout(() => b.classList.remove('shake'), 450);
+          }
+        });
+        rowEl.appendChild(b);
+      });
+    }
+
+    function restart() {
+      round = 0;
+      startRound();
+    }
+
+    showStart({ emoji: '🎧', label: '▶ Слушать', onStart: startRound });
+  </script>
+</body>
+</html>

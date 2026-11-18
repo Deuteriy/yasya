@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Корзины</title>
+</head>
+<body>
+  <main class="game">
+    <div class="game__top">
+      <a class="game__home" href="../../index.html" aria-label="Домой">🏠</a>
+      <div class="game__hint" id="hint">Раунд 1/2</div>
+    </div>
+    <h1 class="game__task">Разложи по корзинкам</h1>
+    <div class="game__stage">
+      <div class="baskets-wrap">
+        <div class="items-row" id="items"></div>
+        <div class="baskets-row">
+          <div class="basket drop-target" data-cat="fruit">
+            <span class="basket__emoji">🧺</span><small>Фрукты</small>
+          </div>
+          <div class="basket drop-target" data-cat="veg">
+            <span class="basket__emoji">🧺</span><small>Овощи</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script src="../../js/core.js"></script>
+  <script>
+    const FRUITS = ['🍎', '🍌', '🍐', '🍊', '🍓', '🍇'];
+    const VEG = ['🥕', '🍅', '🥒', '🌽', '🥔', '🥦'];
+    const ROUNDS = 2;
+    let round = 0;
+
+    const itemsEl = document.getElementById('items');
+    const hint = document.getElementById('hint');
+
+    function startRound() {
+      hint.textContent = `Раунд ${round + 1}/${ROUNDS}`;
+      // 3 фрукта + 2 овоща, перемешать
+      const batch = shuffle([
+        ...shuffle(FRUITS).slice(0, 3).map((e) => ({ e, cat: 'fruit' })),
+        ...shuffle(VEG).slice(0, 2).map((e) => ({ e, cat: 'veg' })),
+      ]);
+      itemsEl.innerHTML = '';
+      let placed = 0;
+
+      batch.forEach((item) => {
+        const el = document.createElement('button');
+        el.className = 'basket-item';
+        el.textContent = item.e;
+        el.setAttribute('aria-label', 'предмет');
+        makeDraggable(el, {
+          onDrop: (target) => {
+            if (!target) return; // бросили мимо — молча вернёмся
+            if (target.dataset.cat !== item.cat) {
+              playSound('fail');
+              return;
+            }
+            playSound('pop');
+            target.classList.add('basket--got');
+            setTimeout(() => target.classList.remove('basket--got'), 400);
+            el.remove();
+            placed++;
+            if (placed === batch.length) {
+              playSound('success');
+              round++;
+              setTimeout(() => {
+                round >= ROUNDS
+                  ? showWin({ onAgain: restart })
+                  : startRound();
+              }, 900);
+            }
+          },
+        });
+        itemsEl.appendChild(el);
+      });
+    }
+
+    function restart() {
+      round = 0;
+      startRound();
+    }
+
+    showStart({ emoji: '🧺', label: '▶ Играть', onStart: () => { speak('Разложи по корзинкам'); startRound(); } });
+  </script>
+</body>
+</html>

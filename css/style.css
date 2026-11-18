@@ -146,14 +146,21 @@ body {
 }
 
 .tile:nth-child(1) { animation-delay: 0.05s; }
-.tile:nth-child(2) { animation-delay: 0.11s; }
-.tile:nth-child(3) { animation-delay: 0.17s; }
-.tile:nth-child(4) { animation-delay: 0.23s; }
-.tile:nth-child(5) { animation-delay: 0.29s; }
-.tile:nth-child(6) { animation-delay: 0.35s; }
-.tile:nth-child(7) { animation-delay: 0.41s; }
-.tile:nth-child(8) { animation-delay: 0.47s; }
-.tile:nth-child(9) { animation-delay: 0.53s; }
+.tile:nth-child(2) { animation-delay: 0.10s; }
+.tile:nth-child(3) { animation-delay: 0.15s; }
+.tile:nth-child(4) { animation-delay: 0.20s; }
+.tile:nth-child(5) { animation-delay: 0.25s; }
+.tile:nth-child(6) { animation-delay: 0.30s; }
+.tile:nth-child(7) { animation-delay: 0.35s; }
+.tile:nth-child(8) { animation-delay: 0.40s; }
+.tile:nth-child(9) { animation-delay: 0.45s; }
+.tile:nth-child(10) { animation-delay: 0.50s; }
+.tile:nth-child(11) { animation-delay: 0.55s; }
+.tile:nth-child(12) { animation-delay: 0.60s; }
+.tile:nth-child(13) { animation-delay: 0.65s; }
+.tile:nth-child(14) { animation-delay: 0.70s; }
+.tile:nth-child(15) { animation-delay: 0.75s; }
+.tile:nth-child(16) { animation-delay: 0.80s; }
 
 .tile:active {
   transform: scale(0.94);
@@ -175,6 +182,13 @@ body {
 .tile--puzzle  { background: linear-gradient(165deg, #9beedd, #2fb8a6); }
 .tile--bubbles { background: linear-gradient(165deg, #bfeaff, #54c2ff); }
 .tile--simon   { background: linear-gradient(165deg, #ffb3a0, #ff6f5e); }
+.tile--baskets { background: linear-gradient(165deg, #e4f0a8, #a4c93f); }
+.tile--size    { background: linear-gradient(165deg, #ffd7ae, #f2a25c); }
+.tile--whosaid { background: linear-gradient(165deg, #d9c8ff, #8f6fe8); }
+.tile--odd     { background: linear-gradient(165deg, #ffc9d6, #f2708f); }
+.tile--pattern { background: linear-gradient(165deg, #bfe8ff, #58b6e8); }
+.tile--maze    { background: linear-gradient(165deg, #e0d2f5, #9d86d6); }
+.tile--piano   { background: linear-gradient(165deg, #c8f0dd, #62c99a); }
 
 @keyframes pop-in {
   from {
@@ -881,6 +895,238 @@ body {
 .simon__pad.lit {
   filter: brightness(1.55) saturate(1.2);
   transform: scale(1.04);
+}
+
+/* ===== Игра «Корзины» ===== */
+.baskets-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 5vmin;
+  align-items: center;
+}
+
+.items-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  min-height: 90px;
+}
+
+.basket-item {
+  width: clamp(64px, 13vmin, 104px);
+  aspect-ratio: 1;
+  border-radius: 22px;
+  border: 5px solid #fff;
+  background: linear-gradient(180deg, #ffffff, #fff4e2);
+  box-shadow: var(--shadow-pop);
+  font-size: clamp(36px, 8.5vmin, 68px);
+  cursor: grab;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.basket-item.is-dragging {
+  z-index: 30;
+  box-shadow: 0 18px 32px rgba(93, 64, 28, 0.35);
+}
+
+.baskets-row {
+  display: flex;
+  gap: 8vmin;
+}
+
+.basket {
+  width: min(36vmin, 240px);
+  padding: 16px;
+  border-radius: 26px;
+  border: 5px solid #fff;
+  background: linear-gradient(180deg, #ffffff, #fff0d8);
+  box-shadow: 0 12px 26px rgba(93, 64, 28, 0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.basket.drop-hot {
+  box-shadow: 0 0 0 5px var(--accent-2) inset, 0 12px 26px rgba(93, 64, 28, 0.18);
+}
+
+.basket.basket--got {
+  animation: basket-got 0.4s ease;
+}
+
+@keyframes basket-got {
+  40% {
+    transform: scale(1.1) rotate(-3deg);
+  }
+}
+
+.basket__emoji {
+  font-size: clamp(52px, 12vmin, 96px);
+  filter: drop-shadow(0 5px 6px rgba(0, 0, 0, 0.15));
+}
+
+.basket small {
+  font-size: clamp(15px, 2.8vmin, 22px);
+  font-weight: 900;
+  color: var(--text-soft);
+}
+
+/* ===== Игра «Большой-маленький» ===== */
+.size-row {
+  display: flex;
+  align-items: center;
+  gap: 12vmin;
+  padding: 4vmin;
+}
+
+.size-item {
+  background: none;
+  border: none;
+  cursor: pointer;
+  line-height: 1.2;
+  filter: drop-shadow(0 8px 8px rgba(93, 64, 28, 0.25));
+  transition: transform 0.15s ease;
+}
+
+.size-item:active {
+  transform: scale(0.9);
+}
+
+/* ===== Игра «Кто сказал?» ===== */
+.whosaid-row {
+  display: flex;
+  gap: 4.5vmin;
+}
+
+.whosaid-row .animal {
+  width: min(26vmin, 210px);
+}
+
+/* ===== Игра «Найди лишний» ===== */
+.odd-row {
+  display: flex;
+  gap: 4vmin;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ===== Игра «Продолжи ряд» ===== */
+.pattern-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 7vmin;
+  align-items: center;
+}
+
+.pattern-row {
+  display: flex;
+  gap: 3vmin;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pat-cell {
+  width: clamp(64px, 13vmin, 108px);
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 5px solid #fff;
+  border-radius: 22px;
+  box-shadow: 0 8px 18px rgba(93, 64, 28, 0.15);
+  font-size: clamp(36px, 8.5vmin, 66px);
+}
+
+.pat-cell--q {
+  background: #fff4e2;
+  box-shadow: 0 0 0 4px var(--accent) inset, 0 8px 18px rgba(93, 64, 28, 0.15);
+  font-weight: 1000;
+  color: var(--text-soft);
+}
+
+/* ===== Игра «Лабиринт» ===== */
+.maze-wrap {
+  position: relative;
+  width: min(78vmin, 520px);
+  aspect-ratio: 1;
+}
+
+.maze-wrap canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  background: #fff;
+  border: 6px solid #fff;
+  border-radius: 26px;
+  box-shadow: 0 14px 30px rgba(93, 64, 28, 0.18);
+}
+
+/* ===== Игра «Пианино» ===== */
+.piano-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3vmin;
+  align-items: center;
+}
+
+.piano {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  width: min(94vw, 720px);
+  height: clamp(180px, 40vmin, 340px);
+}
+
+.piano__key {
+  flex: 1;
+  border: 5px solid #fff;
+  border-radius: 14px 14px 22px 22px;
+  box-shadow: var(--shadow-pop);
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 10px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
+}
+
+.piano__key small {
+  font: inherit;
+  font-weight: 900;
+  font-size: clamp(12px, 2.4vmin, 18px);
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.piano__key:active {
+  transform: translateY(5px);
+  box-shadow: var(--shadow-pop-press);
+}
+
+.piano__key.lit {
+  filter: brightness(1.35);
+  transform: translateY(3px) scale(1.02);
+}
+
+.note-fly {
+  position: absolute;
+  font-size: clamp(26px, 5vmin, 40px);
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: note-fly 0.9s ease-out forwards;
+}
+
+@keyframes note-fly {
+  to {
+    transform: translateX(-50%) translateY(-90px) rotate(14deg);
+    opacity: 0;
+  }
 }
 
 /* ===== Стартовый экран ===== */

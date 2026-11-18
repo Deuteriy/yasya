@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Найди лишний</title>
+</head>
+<body>
+  <main class="game">
+    <div class="game__top">
+      <a class="game__home" href="../../index.html" aria-label="Домой">🏠</a>
+      <button class="game__speak" id="say" aria-label="Повторить">🔊</button>
+    </div>
+    <h1 class="game__task">Найди лишний</h1>
+    <div class="game__stage">
+      <div class="odd-row" id="row"></div>
+    </div>
+  </main>
+  <script src="../../js/core.js"></script>
+  <script>
+    const CATS = {
+      Животные: ['🐘', '🦒', '🐊', '🦓', '🐳', '🦔', '🐿️'],
+      Фрукты: ['🍎', '🍌', '🍐', '🍊', '🍓', '🍇'],
+      Овощи: ['🥕', '🌽', '🥒', '🥦', '🥔', '🍅'],
+      Транспорт: ['🚗', '🚌', '🚜', '✈️', '🚂', '🚲'],
+    };
+    const ROUNDS = 5;
+    let round = 0;
+    const phrase = 'Найди лишний предмет';
+
+    const rowEl = document.getElementById('row');
+    document.getElementById('say').addEventListener('click', () => speak(phrase));
+
+    function startRound() {
+      speak(phrase);
+      // основная категория (3 предмета) + чужая (1 лишний)
+      const [main, other] = shuffle(Object.keys(CATS));
+      const items = [
+        ...shuffle(CATS[main]).slice(0, 3).map((e) => ({ e, odd: false })),
+        { e: shuffle(CATS[other])[0], odd: true },
+      ];
+
+      rowEl.innerHTML = '';
+      shuffle(items).forEach((item) => {
+        const b = document.createElement('button');
+        b.className = 'opt';
+        b.textContent = item.e;
+        b.setAttribute('aria-label', 'предмет');
+        b.addEventListener('click', () => {
+          if (item.odd) {
+            playSound('success');
+            round++;
+            setTimeout(() => {
+              round >= ROUNDS ? showWin({ onAgain: restart }) : startRound();
+            }, 850);
+          } else {
+            playSound('fail');
+            b.classList.add('shake');
+            setTimeout(() => b.classList.remove('shake'), 450);
+          }
+        });
+        rowEl.appendChild(b);
+      });
+    }
+
+    function restart() {
+      round = 0;
+      startRound();
+    }
+
+    showStart({ emoji: '🔍', label: '▶ Играть', onStart: startRound });
+  </script>
+</body>
+</html>
