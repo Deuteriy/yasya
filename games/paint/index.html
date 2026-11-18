@@ -12,110 +12,164 @@
   <main class="game">
     <div class="game__top">
       <a class="game__home" href="../../index.html" aria-label="Домой">🏠</a>
-      <button class="game__speak" id="clear" aria-label="Стереть">🧽</button>
+      <button class="game__speak" id="next" aria-label="Другая картинка">🖼️</button>
     </div>
     <h1 class="game__task">Раскрась картинку</h1>
     <div class="game__stage">
       <div class="paint-wrap">
-        <div class="paint-card" id="card"></div>
+        <div class="easel" id="easel">
+          <canvas id="cv"></canvas>
+          <div class="outline" id="outline"></div>
+        </div>
         <div class="palette" id="palette"></div>
+        <button class="btn" id="done">✨ Готово</button>
       </div>
     </div>
   </main>
   <script src="../../js/core.js"></script>
   <script>
-    // Картинки — простые SVG с зонами .fillzone
+    // Контурные картинки: только фигуры (заливка не нужна — красим пальцем)
     const PICTURES = [
       // домик
-      `<svg viewBox="0 0 200 200" class="paint-svg">
-        <rect class="fillzone" x="56" y="28" width="18" height="34" rx="2"/>
-        <polygon class="fillzone" points="100,12 178,84 22,84"/>
-        <rect class="fillzone" x="42" y="82" width="116" height="92" rx="4"/>
-        <circle class="fillzone" cx="70" cy="112" r="14"/>
-        <rect class="fillzone" x="88" y="122" width="30" height="52" rx="3"/>
-      </svg>`,
+      `<rect class="fillzone" x="56" y="28" width="18" height="34" rx="2"/>
+       <polygon class="fillzone" points="100,12 178,84 22,84"/>
+       <rect class="fillzone" x="42" y="82" width="116" height="92" rx="4"/>
+       <circle class="fillzone" cx="70" cy="112" r="14"/>
+       <rect class="fillzone" x="88" y="122" width="30" height="52" rx="3"/>`,
       // рыбка
-      `<svg viewBox="0 0 200 200" class="paint-svg">
-        <polygon class="fillzone" points="132,100 190,62 182,138"/>
-        <polygon class="fillzone" points="88,66 104,38 120,66"/>
-        <ellipse class="fillzone" cx="88" cy="100" rx="56" ry="36"/>
-        <circle class="fillzone" cx="52" cy="92" r="9"/>
-      </svg>`,
+      `<polygon class="fillzone" points="132,100 190,62 182,138"/>
+       <polygon class="fillzone" points="88,66 104,38 120,66"/>
+       <ellipse class="fillzone" cx="88" cy="100" rx="56" ry="36"/>
+       <circle class="fillzone" cx="52" cy="92" r="9"/>`,
       // ёлочка
-      `<svg viewBox="0 0 200 200" class="paint-svg">
-        <rect class="fillzone" x="88" y="138" width="24" height="40" rx="3"/>
-        <polygon class="fillzone" points="100,14 56,72 144,72"/>
-        <polygon class="fillzone" points="100,44 44,108 156,108"/>
-        <polygon class="fillzone" points="100,74 28,144 172,144"/>
-      </svg>`,
+      `<rect class="fillzone" x="88" y="138" width="24" height="40" rx="3"/>
+       <polygon class="fillzone" points="100,14 56,72 144,72"/>
+       <polygon class="fillzone" points="100,44 44,108 156,108"/>
+       <polygon class="fillzone" points="100,74 28,144 172,144"/>`,
       // цветок
-      `<svg viewBox="0 0 200 200" class="paint-svg">
-        <rect class="fillzone" x="95" y="116" width="10" height="68" rx="5"/>
-        <ellipse class="fillzone" cx="74" cy="150" rx="24" ry="11" transform="rotate(-32 74 150)"/>
-        <circle class="fillzone" cx="100" cy="50" r="22"/>
-        <circle class="fillzone" cx="133" cy="74" r="22"/>
-        <circle class="fillzone" cx="121" cy="112" r="22"/>
-        <circle class="fillzone" cx="79" cy="112" r="22"/>
-        <circle class="fillzone" cx="67" cy="74" r="22"/>
-        <circle class="fillzone" cx="100" cy="84" r="19"/>
-      </svg>`,
+      `<rect class="fillzone" x="95" y="116" width="10" height="68" rx="5"/>
+       <ellipse class="fillzone" cx="74" cy="150" rx="24" ry="11" transform="rotate(-32 74 150)"/>
+       <circle class="fillzone" cx="100" cy="50" r="22"/>
+       <circle class="fillzone" cx="133" cy="74" r="22"/>
+       <circle class="fillzone" cx="121" cy="112" r="22"/>
+       <circle class="fillzone" cx="79" cy="112" r="22"/>
+       <circle class="fillzone" cx="67" cy="74" r="22"/>
+       <circle class="fillzone" cx="100" cy="84" r="19"/>`,
       // машинка
-      `<svg viewBox="0 0 200 200" class="paint-svg">
-        <path class="fillzone" d="M52 108 L74 72 H126 L148 108 Z"/>
-        <rect class="fillzone" x="18" y="106" width="164" height="38" rx="14"/>
-        <rect class="fillzone" x="82" y="78" width="36" height="26" rx="4"/>
-        <circle class="fillzone" cx="56" cy="146" r="19"/>
-        <circle class="fillzone" cx="144" cy="146" r="19"/>
-      </svg>`,
+      `<path class="fillzone" d="M52 108 L74 72 H126 L148 108 Z"/>
+       <rect class="fillzone" x="18" y="106" width="164" height="38" rx="14"/>
+       <rect class="fillzone" x="82" y="78" width="36" height="26" rx="4"/>
+       <circle class="fillzone" cx="56" cy="146" r="19"/>
+       <circle class="fillzone" cx="144" cy="146" r="19"/>`,
       // бабочка
-      `<svg viewBox="0 0 200 200" class="paint-svg">
-        <ellipse class="fillzone" cx="62" cy="66" rx="36" ry="32"/>
-        <ellipse class="fillzone" cx="138" cy="66" rx="36" ry="32"/>
-        <ellipse class="fillzone" cx="62" cy="134" rx="36" ry="32"/>
-        <ellipse class="fillzone" cx="138" cy="134" rx="36" ry="32"/>
-        <ellipse class="fillzone" cx="100" cy="100" rx="12" ry="46"/>
-      </svg>`,
+      `<ellipse class="fillzone" cx="62" cy="66" rx="36" ry="32"/>
+       <ellipse class="fillzone" cx="138" cy="66" rx="36" ry="32"/>
+       <ellipse class="fillzone" cx="62" cy="134" rx="36" ry="32"/>
+       <ellipse class="fillzone" cx="138" cy="134" rx="36" ry="32"/>
+       <ellipse class="fillzone" cx="100" cy="100" rx="12" ry="46"/>`,
     ];
 
     const COLORS = [
       '#ff5a5f', '#ff9f43', '#ffd93d', '#6bcb77',
-      '#4d96ff', '#3f5fd8', '#c084fc', '#ff8fc7',
-      '#a0714f', '#ffffff',
+      '#4d96ff', '#3f5fd8', '#c084fc', '#ff8fc7', '#a0714f',
     ];
 
-    const card = document.getElementById('card');
-    const palette = document.getElementById('palette');
     let color = COLORS[0];
-    let colored = 0;
-    let zones = [];
-    let won = false;
+    let erasing = false;
+    const strokes = []; // { color, erase, pts:[[nx,ny] 0..1] } — для перерисовки при повороте
+    let current = null;
+
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+    const outline = document.getElementById('outline');
+    const palette = document.getElementById('palette');
+    let W = 0; // CSS-размер холста
 
     function loadPicture() {
-      won = false;
-      colored = 0;
-      card.innerHTML = PICTURES[Math.floor(Math.random() * PICTURES.length)];
-      zones = [...card.querySelectorAll('.fillzone')];
-      zones.forEach((z) => {
-        z.setAttribute('fill', '#f7f1e6');
-        z.addEventListener('click', () => {
-          if (z.getAttribute('fill') === color) return;
-          const was = z.dataset.colored === '1';
-          if (!was) {
-            z.dataset.colored = '1';
-            colored++;
-          }
-          z.setAttribute('fill', color);
-          playSound('pop');
-          if (colored === zones.length && !won) {
-            won = true;
-            speak('Красота!');
-            setTimeout(() => showWin({ onAgain: loadPicture }), 700);
-          }
-        });
-      });
+      outline.innerHTML =
+        `<svg viewBox="0 0 200 200" class="paint-svg">${
+          PICTURES[Math.floor(Math.random() * PICTURES.length)]
+        }</svg>`;
+      strokes.length = 0;
+      fit();
     }
 
-    // палитра
+    function fit() {
+      const r = cv.getBoundingClientRect();
+      if (!r.width) return;
+      const dpr = window.devicePixelRatio || 1;
+      W = r.width;
+      cv.width = Math.round(r.width * dpr);
+      cv.height = Math.round(r.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      redraw();
+    }
+
+    function redraw() {
+      ctx.clearRect(0, 0, W, W);
+      strokes.forEach((s) => paintStroke(s, 0, s.pts.length));
+    }
+
+    // рисует штрих s: точки с from до to (для инкрементальной дорисовки)
+    function paintStroke(s, from, to) {
+      ctx.globalCompositeOperation = s.erase ? 'destination-out' : 'source-over';
+      ctx.strokeStyle = s.color;
+      ctx.fillStyle = s.color;
+      ctx.lineWidth = W * 0.085; // толстая кисточка
+      ctx.lineCap = ctx.lineJoin = 'round';
+      const p = s.pts;
+      if (to - from === 1 && p.length === 1) {
+        ctx.beginPath();
+        ctx.arc(p[0][0] * W, p[0][1] * W, ctx.lineWidth / 2, 0, Math.PI * 2);
+        ctx.fill();
+        return;
+      }
+      ctx.beginPath();
+      ctx.moveTo(p[from][0] * W, p[from][1] * W);
+      for (let i = from + 1; i < to; i++) ctx.lineTo(p[i][0] * W, p[i][1] * W);
+      ctx.stroke();
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    const norm = (e) => {
+      const r = cv.getBoundingClientRect();
+      return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height];
+    };
+
+    cv.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      try {
+        cv.setPointerCapture(e.pointerId);
+      } catch {}
+      current = { color, erase: erasing, pts: [norm(e)] };
+      paintStroke(current, 0, 1);
+    });
+
+    cv.addEventListener('pointermove', (e) => {
+      if (!current) return;
+      const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+      for (const ev of evs) {
+        const from = current.pts.length - 1;
+        current.pts.push(norm(ev));
+        paintStroke(current, from, current.pts.length);
+      }
+    });
+
+    const endStroke = () => {
+      if (current) {
+        strokes.push(current);
+        current = null;
+      }
+    };
+    cv.addEventListener('pointerup', endStroke);
+    cv.addEventListener('pointercancel', endStroke);
+
+    // палитра: цвета + ластик
+    const swatches = [];
+    function select(el) {
+      swatches.forEach((s) => s.classList.remove('sel'));
+      el.classList.add('sel');
+    }
     COLORS.forEach((c, i) => {
       const b = document.createElement('button');
       b.className = 'swatch';
@@ -124,24 +178,39 @@
       b.setAttribute('aria-label', 'цвет');
       b.addEventListener('click', () => {
         color = c;
-        palette.querySelectorAll('.swatch').forEach((s) => s.classList.remove('sel'));
-        b.classList.add('sel');
+        erasing = false;
+        select(b);
         playSound('pop');
       });
       palette.appendChild(b);
+      swatches.push(b);
     });
-
-    document.getElementById('clear').addEventListener('click', () => {
-      zones.forEach((z) => {
-        z.setAttribute('fill', '#f7f1e6');
-        delete z.dataset.colored;
-      });
-      colored = 0;
-      won = false;
+    const er = document.createElement('button');
+    er.className = 'swatch swatch--erase';
+    er.textContent = '🧽';
+    er.setAttribute('aria-label', 'ластик');
+    er.addEventListener('click', () => {
+      erasing = true;
+      select(er);
       playSound('pop');
     });
+    palette.appendChild(er);
+    swatches.push(er);
 
-    showStart({ emoji: '🖍️', label: '▶ Раскрасить', onStart: () => speak('Раскрась картинку') });
+    document.getElementById('done').addEventListener('click', () => {
+      speak('Ух ты, красота!');
+      showWin({ onAgain: loadPicture });
+    });
+
+    document.getElementById('next').addEventListener('click', () => {
+      playSound('pop');
+      loadPicture();
+    });
+
+    // поворот iPad — перерисовать сохранённые штрихи под новый размер
+    window.addEventListener('resize', fit);
+
+    showStart({ emoji: '🖍️', label: '▶ Раскрасить', onStart: () => speak('Раскрась картинку пальчиком') });
     loadPicture();
   </script>
 </body>
