@@ -113,9 +113,66 @@ async function playSound(kind = 'pop') {
   }
 }
 
-// ===== Речь (озвучка заданий; на iOS тоже требует первого касания) =====
-function speak(text) {
-  if (!Settings.soundOn() || !text) return;
+// ===== Речь: сперва записанный голос родителя, потом синтез =====
+// Записи живут в IndexedDB (ключ — фраза, значение — Blob).
+
+let _voiceDB = null;
+function getVoiceDB() {
+  return new Promise((resolve, reject) => {
+    if (_voiceDB) return resolve(_voiceDB);
+    try {
+      const req = indexedDB.open('yasya-voice', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('phrases');
+      req.onsuccess = () => {
+        _voiceDB = req.result;
+        resolve(_voiceDB);
+      };
+      req.onerror = () => reject(req.error);
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+
+function voiceGet(text) {
+  return getVoiceDB()
+    .then(
+      (db) =>
+        new Promise((resolve) => {
+          const r = db.transaction('phrases').objectStore('phrases').get(text);
+          r.onsuccess = () => resolve(r.result || null);
+          r.onerror = () => resolve(null);
+        })
+    )
+    .catch(() => null);
+}
+
+function voicePut(text, blob) {
+  return getVoiceDB().then(
+    (db) =>
+      new Promise((resolve, reject) => {
+        const r = db.transaction('phrases', 'readwrite').objectStore('phrases').put(blob, text);
+        r.onsuccess = resolve;
+        r.onerror = () => reject(r.error);
+      })
+  );
+}
+
+function voiceDelete(text) {
+  return getVoiceDB().then(
+    (db) =>
+      new Promise((resolve) => {
+        const r = db.transaction('phrases', 'readwrite').objectStore('phrases').delete(text);
+        r.onsuccess = resolve;
+        r.onerror = resolve;
+      })
+  );
+}
+
+let _voiceAudio = null;
+
+// Синтез речи (системный голос) — запасной вариант
+function ttsSpeak(text) {
   try {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
@@ -136,6 +193,53 @@ function speak(text) {
     console.warn('tts:', e);
   }
 }
+
+async function speak(text) {
+  if (!Settings.soundOn() || !text) return;
+  // есть ли запись голосом родителя?
+  const blob = await voiceGet(text);
+  if (blob) {
+    try {
+      speechSynthesis.cancel();
+      if (_voiceAudio) _voiceAudio.pause();
+      const a = new Audio(URL.createObjectURL(blob));
+      _voiceAudio = a;
+      a.addEventListener('ended', () => URL.revokeObjectURL(a.src));
+      await a.play();
+      return;
+    } catch {}
+  }
+  ttsSpeak(text);
+}
+
+// Все реплики приложения — для студии записи голоса (tools/record).
+// Держать в точном соответствии с фразами в коде игр!
+const VOICE_PHRASES = {
+  Цвета: ['Покажи красный шарик', 'Покажи синий шарик', 'Покажи жёлтый шарик',
+    'Покажи зелёный шарик', 'Покажи оранжевый шарик', 'Покажи фиолетовый шарик'],
+  Пары: ['Найди одинаковых зверят', 'собачка', 'кошечка', 'зайчик', 'лисёнок',
+    'мишка', 'панда', 'поросёнок', 'корова', 'лягушка', 'лев', 'тигр', 'обезьянка'],
+  Счёт: ['Посчитай и покажи число', '1', '2', '3', '4', '5'],
+  'Звуки и «Кто сказал?»': ['Кто живёт на дворе?', 'Кто сказал?', 'Корова', 'Собака',
+    'Кошка', 'Овечка', 'Поросёнок', 'Лошадь', 'Петух', 'Курочка', 'Коза', 'Пчела',
+    'Волк', 'Лев', 'Обезьянка', 'Летучая мышка', 'Птичка', 'Змея'],
+  Тени: ['Найди такую же картинку'],
+  Раскраска: ['Что будем раскрашивать?', 'Раскрась картинку пальчиком', 'Ух ты, красота!',
+    'Раскрась кошечку', 'Раскрась собачку', 'Раскрась зайчика', 'Раскрась лисёнка',
+    'Раскрась мишку', 'Раскрась лягушку', 'Раскрась уточку', 'Раскрась бабочку',
+    'Раскрась божью коровку', 'Раскрась подсолнух', 'Раскрась дерево',
+    'Раскрась яблоко', 'Раскрась клубнику', 'Раскрась машинку', 'Раскрась ракету',
+    'Раскрась шарик'],
+  Пузыри: ['Лопай пузырьки'],
+  Повтори: ['Повтори за мной', 'Попробуй ещё'],
+  Корзины: ['Разложи по корзинкам'],
+  Большой: ['Где большой?', 'Где маленький?'],
+  Лишний: ['Найди лишний предмет'],
+  Ряд: ['Продолжи ряд. Что дальше?'],
+  Лабиринт: ['Проведи мышку к сыру'],
+  Пианино: ['Поиграй на пианино'],
+  Панель: ['Привет! Это мой голос.'],
+};
 
 // ===== Сохранение прогресса (ключи вида yasya.<game>.<key>) =====
 const Progress = {

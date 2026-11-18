@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <title>Запись голоса</title>
+  <style>
+    body { overflow-y: auto; }
+    .rec { max-width: 760px; margin: 0 auto; padding: 18px 16px 60px; position: relative; z-index: 1; }
+    .rec h1 { font-size: 26px; font-weight: 1000; text-align: center; margin: 6px 0 2px; }
+    .rec__note { text-align: center; font-weight: 700; color: var(--text-soft); font-size: 15px; margin-bottom: 16px; }
+    .rec h2 {
+      font-size: 18px; font-weight: 900; margin: 20px 0 8px;
+      color: #6b4f33; border-bottom: 3px solid #ead9c0; padding-bottom: 4px;
+    }
+    .rec__row {
+      display: flex; align-items: center; gap: 10px;
+      background: #fff; border-radius: 16px; padding: 8px 12px; margin-bottom: 8px;
+      box-shadow: 0 4px 10px rgba(93,64,28,.1);
+    }
+    .rec__text { flex: 1; font-weight: 800; font-size: 16px; line-height: 1.25; }
+    .rec__badge { font-size: 18px; }
+    .rec__btn {
+      width: 46px; height: 46px; flex: none; border-radius: 50%;
+      border: 4px solid #fff; font-size: 20px; cursor: pointer;
+      box-shadow: 0 4px 10px rgba(93,64,28,.18); background: #fff;
+      transition: transform .1s ease;
+    }
+    .rec__btn:active { transform: scale(.9); }
+    .rec__btn--play { background: #e8f6ff; }
+    .rec__btn--rec { background: #ffe3e3; }
+    .rec__btn--rec.on { background: #ff5a5f; animation: rec-pulse 1s infinite; }
+    .rec__btn--del { background: #fff0d8; font-size: 17px; }
+    .rec__btn[hidden] { display: none; }
+    @keyframes rec-pulse { 50% { box-shadow: 0 0 0 10px rgba(255,90,95,.25); } }
+    .rec__home {
+      position: sticky; top: 0; display: block; width: 46px; height: 46px;
+      background: #fff; border-radius: 50%; box-shadow: 0 4px 10px rgba(93,64,28,.18);
+      font-size: 22px; text-align: center; line-height: 42px; text-decoration: none;
+    }
+    .rec__err { color: #c0392b; font-weight: 800; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="rec">
+    <a class="rec__home" href="../index.html" aria-label="Домой">🏠</a>
+    <h1>🎙 Запись голоса</h1>
+    <p class="rec__note">
+      Запишите фразы своим голосом — приложение будет говорить ими вместо робота.
+      Незаписанные фразы остаются на синтезированном голосе.
+    </p>
+    <div id="list"></div>
+  </div>
+  <script src="../js/core.js"></script>
+  <script>
+    const list = document.getElementById('list');
+    let recorder = null;
+    let chunks = [];
+    let activeRow = null;
+
+    async function markRecorded(text, badge) {
+      const has = await voiceGet(text);
+      badge.textContent = has ? '✅' : '⬜';
+      badge.parentElement.querySelector('.rec__btn--del').hidden = !has;
+    }
+
+    async function playPhrase(text, btn) {
+      const blob = await voiceGet(text);
+      if (blob) {
+        const a = new Audio(URL.createObjectURL(blob));
+        a.addEventListener('ended', () => URL.revokeObjectURL(a.src));
+        a.play().catch(() => {});
+      } else {
+        // ещё нет записи — послушать синтезированный вариант
+        speak(text);
+      }
+    }
+
+    async function toggleRecord(text, btn, badge) {
+      // уже идёт запись — остановить и сохранить
+      if (recorder && recorder.state === 'recording') {
+        recorder.stop();
+        return;
+      }
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (e) {
+        alert('Нет доступа к микрофону. Разрешите микрофон для этого сайта в настройках Safari.');
+        return;
+      }
+      chunks = [];
+      recorder = new MediaRecorder(stream);
+      activeRow = { text, btn, badge };
+
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop()); // отпускаем микрофон
+        btn.classList.remove('on');
+        btn.textContent = '●';
+        if (!chunks.length) return;
+        const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/mp4' });
+        await voicePut(activeRow.text, blob);
+        await markRecorded(activeRow.text, activeRow.badge);
+        // сразу послушать, что получилось
+        const a = new Audio(URL.createObjectURL(blob));
+        a.addEventListener('ended', () => URL.revokeObjectURL(a.src));
+        a.play().catch(() => {});
+      };
+
+      recorder.start();
+      btn.classList.add('on');
+      btn.textContent = '■';
+    }
+
+    async function deletePhrase(text, badge) {
+      await voiceDelete(text);
+      await markRecorded(text, badge);
+    }
+
+    for (const [group, phrases] of Object.entries(VOICE_PHRASES)) {
+      const h = document.createElement('h2');
+      h.textContent = group;
+      list.appendChild(h);
+      for (const text of phrases) {
+        const row = document.createElement('div');
+        row.className = 'rec__row';
+        const badge = document.createElement('span');
+        badge.className = 'rec__badge';
+        badge.textContent = '⬜';
+        const t = document.createElement('span');
+        t.className = 'rec__text';
+        t.textContent = text;
+        const play = document.createElement('button');
+        play.className = 'rec__btn rec__btn--play';
+        play.textContent = '▶';
+        play.addEventListener('click', () => playPhrase(text));
+        const rec = document.createElement('button');
+        rec.className = 'rec__btn rec__btn--rec';
+        rec.textContent = '●';
+        rec.addEventListener('click', () => toggleRecord(text, rec, badge));
+        const del = document.createElement('button');
+        del.className = 'rec__btn rec__btn--del';
+        del.textContent = '🗑';
+        del.hidden = true;
+        del.addEventListener('click', () => deletePhrase(text, badge));
+        row.append(badge, t, play, rec, del);
+        list.appendChild(row);
+        markRecorded(text, badge);
+      }
+    }
+  </script>
+</body>
+</html>

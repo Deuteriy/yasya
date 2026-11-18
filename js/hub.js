@@ -32,6 +32,7 @@ function openPanel() {
         <select class="select" id="voice"></select>
       </div>
       <div class="panel__row"><span>⭐ Звёздочек: ${Progress.get('global', 'stars')}</span></div>
+      <button class="btn" id="voice-rec">🎙 Записать голос</button>
       <button class="btn" id="reset">🗑 Сбросить прогресс</button>
       <button class="btn" id="close">Закрыть</button>
     </div>`;
@@ -65,6 +66,9 @@ function openPanel() {
   });
 
   panel.querySelector('#close').addEventListener('click', () => panel.remove());
+  panel.querySelector('#voice-rec').addEventListener('click', () => {
+    location.href = 'record/index.html';
+  });
   panel.addEventListener('click', (e) => {
     if (e.target === panel) panel.remove();
   });

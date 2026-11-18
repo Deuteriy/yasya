@@ -1,5 +1,5 @@
 // Service Worker: кэшируем приложение целиком — офлайн-работа на iPad
-const CACHE = 'yasya-v8';
+const CACHE = 'yasya-v9';
 // Пути относительные: приложение живёт в подкаталоге на GitHub Pages
 // (username.github.io/Yasya/), абсолютные "/..." ломались бы.
 const ASSETS = [
@@ -46,6 +46,7 @@ const ASSETS = [
   './games/pattern/index.html',
   './games/maze/index.html',
   './games/piano/index.html',
+  './record/index.html',
 ];
 
 self.addEventListener('install', (event) => {
