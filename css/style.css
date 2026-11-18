@@ -38,6 +38,10 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   font-family: 'Nunito', ui-rounded, -apple-system, 'Segoe UI', sans-serif;
   color: var(--text);
@@ -582,6 +586,40 @@ body {
 }
 
 /* ===== Игра «Раскраска» (холст: рисуем пальцем) ===== */
+.paint-picker {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  width: min(94vw, 720px);
+}
+
+.thumb {
+  aspect-ratio: 1;
+  border-radius: 22px;
+  border: 5px solid #fff;
+  background: linear-gradient(180deg, #ffffff, #fff4e2);
+  box-shadow: 0 10px 20px rgba(93, 64, 28, 0.16);
+  font-size: clamp(38px, 9vmin, 74px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.thumb small {
+  font: inherit;
+  font-weight: 900;
+  font-size: clamp(12px, 2.2vmin, 18px);
+  color: var(--text-soft);
+}
+
+.thumb:active {
+  transform: scale(0.94);
+}
+
 .paint-wrap {
   display: flex;
   flex-direction: column;

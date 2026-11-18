@@ -12,12 +12,13 @@
   <main class="game">
     <div class="game__top">
       <a class="game__home" href="../../index.html" aria-label="Домой">🏠</a>
-      <button class="game__speak" id="next" aria-label="Другая картинка">🖼️</button>
+      <button class="game__speak" id="back" aria-label="Картинки">🖼️</button>
     </div>
-    <h1 class="game__task">Раскрась картинку</h1>
+    <h1 class="game__task" id="title">Что раскрасим?</h1>
     <div class="game__stage">
-      <div class="paint-wrap">
-        <div class="easel" id="easel">
+      <div class="paint-picker" id="picker"></div>
+      <div class="paint-wrap" id="wrap" hidden>
+        <div class="easel">
           <canvas id="cv"></canvas>
           <div class="outline" id="outline"></div>
         </div>
@@ -28,45 +29,99 @@
   </main>
   <script src="../../js/core.js"></script>
   <script>
-    // Контурные картинки: только фигуры (заливка не нужна — красим пальцем)
+    // Контурные картинки: области соприкасаются краями, не пересекаясь,
+    // чтобы линии не создавали кашу под пальцем
     const PICTURES = [
-      // домик
-      `<rect class="fillzone" x="56" y="28" width="18" height="34" rx="2"/>
-       <polygon class="fillzone" points="100,12 178,84 22,84"/>
-       <rect class="fillzone" x="42" y="82" width="116" height="92" rx="4"/>
-       <circle class="fillzone" cx="70" cy="112" r="14"/>
-       <rect class="fillzone" x="88" y="122" width="30" height="52" rx="3"/>`,
-      // рыбка
-      `<polygon class="fillzone" points="132,100 190,62 182,138"/>
-       <polygon class="fillzone" points="88,66 104,38 120,66"/>
-       <ellipse class="fillzone" cx="88" cy="100" rx="56" ry="36"/>
-       <circle class="fillzone" cx="52" cy="92" r="9"/>`,
-      // ёлочка
-      `<rect class="fillzone" x="88" y="138" width="24" height="40" rx="3"/>
-       <polygon class="fillzone" points="100,14 56,72 144,72"/>
-       <polygon class="fillzone" points="100,44 44,108 156,108"/>
-       <polygon class="fillzone" points="100,74 28,144 172,144"/>`,
-      // цветок
-      `<rect class="fillzone" x="95" y="116" width="10" height="68" rx="5"/>
-       <ellipse class="fillzone" cx="74" cy="150" rx="24" ry="11" transform="rotate(-32 74 150)"/>
-       <circle class="fillzone" cx="100" cy="50" r="22"/>
-       <circle class="fillzone" cx="133" cy="74" r="22"/>
-       <circle class="fillzone" cx="121" cy="112" r="22"/>
-       <circle class="fillzone" cx="79" cy="112" r="22"/>
-       <circle class="fillzone" cx="67" cy="74" r="22"/>
-       <circle class="fillzone" cx="100" cy="84" r="19"/>`,
-      // машинка
-      `<path class="fillzone" d="M52 108 L74 72 H126 L148 108 Z"/>
-       <rect class="fillzone" x="18" y="106" width="164" height="38" rx="14"/>
-       <rect class="fillzone" x="82" y="78" width="36" height="26" rx="4"/>
-       <circle class="fillzone" cx="56" cy="146" r="19"/>
-       <circle class="fillzone" cx="144" cy="146" r="19"/>`,
-      // бабочка
-      `<ellipse class="fillzone" cx="62" cy="66" rx="36" ry="32"/>
-       <ellipse class="fillzone" cx="138" cy="66" rx="36" ry="32"/>
-       <ellipse class="fillzone" cx="62" cy="134" rx="36" ry="32"/>
-       <ellipse class="fillzone" cx="138" cy="134" rx="36" ry="32"/>
-       <ellipse class="fillzone" cx="100" cy="100" rx="12" ry="46"/>`,
+      { e: '🏠', name: 'Домик', svg: `
+        <polygon class="fillzone" points="100,14 182,88 18,88"/>
+        <rect class="fillzone" x="36" y="88" width="128" height="88"/>
+        <circle class="fillzone" cx="68" cy="122" r="15"/>
+        <rect class="fillzone" x="86" y="132" width="32" height="44" rx="3"/>` },
+      { e: '🎄', name: 'Ёлочка', svg: `
+        <rect class="fillzone" x="88" y="150" width="24" height="34" rx="3"/>
+        <polygon class="fillzone" points="100,18 64,62 136,62"/>
+        <polygon class="fillzone" points="100,64 46,108 154,108"/>
+        <polygon class="fillzone" points="100,110 28,148 172,148"/>` },
+      { e: '🌸', name: 'Цветочек', svg: `
+        <rect class="fillzone" x="96" y="118" width="8" height="64" rx="4"/>
+        <ellipse class="fillzone" cx="80" cy="152" rx="20" ry="10" transform="rotate(-35 80 152)"/>
+        <circle class="fillzone" cx="100" cy="50" r="19"/>
+        <circle class="fillzone" cx="134" cy="75" r="19"/>
+        <circle class="fillzone" cx="121" cy="115" r="19"/>
+        <circle class="fillzone" cx="79" cy="115" r="19"/>
+        <circle class="fillzone" cx="66" cy="75" r="19"/>
+        <circle class="fillzone" cx="100" cy="86" r="14"/>` },
+      { e: '🐟', name: 'Рыбка', svg: `
+        <polygon class="fillzone" points="138,100 190,64 184,136"/>
+        <polygon class="fillzone" points="78,66 92,40 106,66"/>
+        <ellipse class="fillzone" cx="86" cy="100" rx="52" ry="34"/>
+        <circle class="fillzone" cx="52" cy="92" r="8"/>` },
+      { e: '🦋', name: 'Бабочка', svg: `
+        <ellipse class="fillzone" cx="58" cy="70" rx="34" ry="28"/>
+        <ellipse class="fillzone" cx="142" cy="70" rx="34" ry="28"/>
+        <ellipse class="fillzone" cx="58" cy="134" rx="34" ry="28"/>
+        <ellipse class="fillzone" cx="142" cy="134" rx="34" ry="28"/>
+        <ellipse class="fillzone" cx="100" cy="100" rx="11" ry="44"/>` },
+      { e: '🚗', name: 'Машинка', svg: `
+        <path class="fillzone" d="M56 104 L76 70 H124 L144 104 Z"/>
+        <rect class="fillzone" x="20" y="104" width="160" height="34" rx="12"/>
+        <rect class="fillzone" x="82" y="76" width="36" height="24" rx="4"/>
+        <circle class="fillzone" cx="56" cy="156" r="18"/>
+        <circle class="fillzone" cx="144" cy="156" r="18"/>` },
+      { e: '🚀', name: 'Ракета', svg: `
+        <polygon class="fillzone" points="72,110 40,160 72,160"/>
+        <polygon class="fillzone" points="128,110 160,160 128,160"/>
+        <polygon class="fillzone" points="100,14 128,70 128,150 72,150 72,70"/>
+        <circle class="fillzone" cx="100" cy="92" r="16"/>
+        <polygon class="fillzone" points="84,150 116,150 100,194"/>` },
+      { e: '🌳', name: 'Дерево', svg: `
+        <rect class="fillzone" x="88" y="130" width="24" height="56" rx="4"/>
+        <circle class="fillzone" cx="100" cy="78" r="52"/>
+        <circle class="fillzone" cx="78" cy="66" r="9"/>
+        <circle class="fillzone" cx="124" cy="84" r="9"/>
+        <circle class="fillzone" cx="92" cy="100" r="8"/>` },
+      { e: '🍄', name: 'Грибок', svg: `
+        <path class="fillzone" d="M28 110 A72 60 0 0 1 172 110 Z"/>
+        <rect class="fillzone" x="76" y="112" width="48" height="62" rx="10"/>
+        <circle class="fillzone" cx="75" cy="80" r="8"/>
+        <circle class="fillzone" cx="118" cy="72" r="7"/>
+        <circle class="fillzone" cx="100" cy="95" r="6"/>` },
+      { e: '☀️', name: 'Солнышко', svg: `
+        <circle class="fillzone" cx="100" cy="100" r="38"/>
+        <polygon class="fillzone" points="140,90 168,100 140,110"/>
+        <polygon class="fillzone" points="121.2,135.4 148.1,148.1 135.4,121.2"/>
+        <polygon class="fillzone" points="90,140 100,168 110,140"/>
+        <polygon class="fillzone" points="78.8,135.4 51.9,148.1 64.6,121.2"/>
+        <polygon class="fillzone" points="60,90 32,100 60,110"/>
+        <polygon class="fillzone" points="78.8,64.6 51.9,51.9 64.6,78.8"/>
+        <polygon class="fillzone" points="110,60 100,32 90,60"/>
+        <polygon class="fillzone" points="121.2,64.6 148.1,51.9 135.4,78.8"/>` },
+      { e: '🍦', name: 'Мороженое', svg: `
+        <circle class="fillzone" cx="100" cy="70" r="40"/>
+        <polygon class="fillzone" points="60,110 140,110 100,190"/>
+        <circle class="fillzone" cx="100" cy="22" r="8"/>` },
+      { e: '🧁', name: 'Кексик', svg: `
+        <ellipse class="fillzone" cx="100" cy="38" rx="6" ry="9"/>
+        <rect class="fillzone" x="96" y="46" width="8" height="30" rx="2"/>
+        <path class="fillzone" d="M52 118 A48 42 0 0 1 148 118 Z"/>
+        <polygon class="fillzone" points="62,118 138,118 152,172 48,172"/>` },
+      { e: '⛵', name: 'Кораблик', svg: `
+        <polygon class="fillzone" points="28,138 172,138 150,170 50,170"/>
+        <rect class="fillzone" x="96" y="48" width="8" height="90"/>
+        <polygon class="fillzone" points="106,54 106,130 168,130"/>
+        <polygon class="fillzone" points="104,48 134,56 104,64"/>` },
+      { e: '🍎', name: 'Яблоко', svg: `
+        <circle class="fillzone" cx="100" cy="112" r="54"/>
+        <rect class="fillzone" x="96" y="30" width="8" height="28" rx="3"/>
+        <ellipse class="fillzone" cx="122" cy="46" rx="16" ry="9" transform="rotate(-30 122 46)"/>` },
+      { e: '🎈', name: 'Шарик', svg: `
+        <ellipse class="fillzone" cx="100" cy="82" rx="44" ry="54"/>
+        <polygon class="fillzone" points="100,136 92,148 108,148"/>
+        <line class="fillzone" x1="92" y1="148" x2="86" y2="158"/>
+        <line class="fillzone" x1="108" y1="148" x2="114" y2="158"/>
+        <rect class="fillzone" x="84" y="158" width="32" height="26" rx="6"/>` },
+      { e: '❤️', name: 'Сердечко', svg: `
+        <path class="fillzone" d="M100 178 C 34 128 20 68 58 50 C 86 37 100 58 100 74 C 100 58 114 37 142 50 C 180 68 166 128 100 178 Z"/>` },
     ];
 
     const COLORS = [
@@ -83,17 +138,42 @@
     const ctx = cv.getContext('2d');
     const outline = document.getElementById('outline');
     const palette = document.getElementById('palette');
+    const picker = document.getElementById('picker');
+    const wrap = document.getElementById('wrap');
+    const title = document.getElementById('title');
     let W = 0; // CSS-размер холста
 
-    function loadPicture() {
-      outline.innerHTML =
-        `<svg viewBox="0 0 200 200" class="paint-svg">${
-          PICTURES[Math.floor(Math.random() * PICTURES.length)]
-        }</svg>`;
-      strokes.length = 0;
-      fit();
+    // ===== Экран выбора картинки =====
+    PICTURES.forEach((p) => {
+      const b = document.createElement('button');
+      b.className = 'thumb';
+      b.innerHTML = `${p.e}<small>${p.name}</small>`;
+      b.addEventListener('click', () => {
+        playSound('pop');
+        openPicture(p);
+      });
+      picker.appendChild(b);
+    });
+
+    function showPicker() {
+      title.textContent = 'Что раскрасим?';
+      wrap.hidden = true;
+      picker.hidden = false;
     }
 
+    function openPicture(p) {
+      title.textContent = p.name;
+      outline.innerHTML = `<svg viewBox="0 0 200 200" class="paint-svg">${p.svg}</svg>`;
+      strokes.length = 0;
+      current = null;
+      picker.hidden = true;
+      wrap.hidden = false;
+      speak(`Раскрась ${p.name.toLowerCase()}`);
+      // холст мог поменять размер — подгоняем
+      requestAnimationFrame(fit);
+    }
+
+    // ===== Холст =====
     function fit() {
       const r = cv.getBoundingClientRect();
       if (!r.width) return;
@@ -199,19 +279,18 @@
 
     document.getElementById('done').addEventListener('click', () => {
       speak('Ух ты, красота!');
-      showWin({ onAgain: loadPicture });
+      showWin({ onAgain: showPicker });
     });
 
-    document.getElementById('next').addEventListener('click', () => {
+    document.getElementById('back').addEventListener('click', () => {
       playSound('pop');
-      loadPicture();
+      showPicker();
     });
 
     // поворот iPad — перерисовать сохранённые штрихи под новый размер
     window.addEventListener('resize', fit);
 
-    showStart({ emoji: '🖍️', label: '▶ Раскрасить', onStart: () => speak('Раскрась картинку пальчиком') });
-    loadPicture();
+    showStart({ emoji: '🖍️', label: '▶ Раскрасить', onStart: () => { speak('Что будем раскрашивать?'); showPicker(); } });
   </script>
 </body>
 </html>
