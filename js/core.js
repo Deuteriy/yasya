@@ -68,8 +68,13 @@ async function ensureAudio() {
 }
 
 // Простой тон-звук без внешних файлов: kind 'pop' | 'success' | 'fail'
+const _lastSound = {};
 async function playSound(kind = 'pop') {
   if (!Settings.soundOn()) return;
+  // троттлинг: дети тыкают очень быстро — не очередями же играть
+  const now = performance.now();
+  if (_lastSound[kind] && now - _lastSound[kind] < 200) return;
+  _lastSound[kind] = now;
   try {
     const ctx = await ensureAudio();
     const osc = ctx.createOscillator();

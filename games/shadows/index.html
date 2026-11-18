@@ -28,11 +28,13 @@
     const ITEMS = ['🍎', '🍌', '🍇', '🍓', '🐞', '🐟', '🐸', '🦋', '🌻', '🚗', '✈️', '🚀', '🐻', '🦆'];
     const ROUNDS = 5;
     let round = 0;
+    let busy = false; // пока идёт переход между раундами — клики не считаются
     const phrase = 'Найди такую же картинку';
 
     document.getElementById('say').addEventListener('click', () => speak(phrase));
 
     function startRound() {
+      busy = false;
       const picks = shuffle(ITEMS).slice(0, 3);
       const target = picks[Math.floor(Math.random() * picks.length)];
 
@@ -48,7 +50,9 @@
         b.textContent = item;
         b.setAttribute('aria-label', 'вариант');
         b.addEventListener('click', () => {
+          if (busy) return;
           if (item === target) {
+            busy = true;
             playSound('success');
             round++;
             setTimeout(() => {

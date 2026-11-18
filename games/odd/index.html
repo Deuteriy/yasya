@@ -29,12 +29,14 @@
     };
     const ROUNDS = 5;
     let round = 0;
+    let busy = false; // пока идёт переход между раундами — клики не считаются
     const phrase = 'Найди лишний предмет';
 
     const rowEl = document.getElementById('row');
     document.getElementById('say').addEventListener('click', () => speak(phrase));
 
     function startRound() {
+      busy = false;
       speak(phrase);
       // основная категория (3 предмета) + чужая (1 лишний)
       const [main, other] = shuffle(Object.keys(CATS));
@@ -50,7 +52,9 @@
         b.textContent = item.e;
         b.setAttribute('aria-label', 'предмет');
         b.addEventListener('click', () => {
+          if (busy) return;
           if (item.odd) {
+            busy = true;
             playSound('success');
             round++;
             setTimeout(() => {

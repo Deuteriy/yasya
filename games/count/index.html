@@ -27,11 +27,13 @@
     const TYPES = ['🦆', '🐟', '🍎', '🎈', '🚗', '🐝'];
     const ROUNDS = 5;
     let round = 0;
+    let busy = false; // пока идёт переход между раундами — клики не считаются
     const phrase = 'Посчитай и покажи число';
 
     document.getElementById('say').addEventListener('click', () => speak(phrase));
 
     function startRound() {
+      busy = false;
       const emoji = TYPES[Math.floor(Math.random() * TYPES.length)];
       const n = 1 + Math.floor(Math.random() * 5); // 1..5
 
@@ -56,7 +58,9 @@
         b.className = 'digit';
         b.textContent = v;
         b.addEventListener('click', () => {
+          if (busy) return;
           if (v === n) {
+            busy = true;
             playSound('success');
             speak(String(n));
             round++;

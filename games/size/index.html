@@ -25,12 +25,14 @@
     const ROUNDS = 5;
     let round = 0;
     let phrase = '';
+    let busy = false; // пока идёт переход между раундами — клики не считаются
 
     const taskEl = document.getElementById('task');
     const rowEl = document.getElementById('row');
     document.getElementById('say').addEventListener('click', () => speak(phrase));
 
     function startRound() {
+      busy = false;
       const e = SET[Math.floor(Math.random() * SET.length)];
       const wantBig = Math.random() < 0.5;
       phrase = wantBig ? 'Где большой?' : 'Где маленький?';
@@ -50,8 +52,10 @@
             : 'clamp(38px, 9vmin, 68px)';
         b.setAttribute('aria-label', size === 'big' ? 'большой' : 'маленький');
         b.addEventListener('click', () => {
+          if (busy) return;
           const isBig = b.dataset.size === 'big';
           if (isBig === wantBig) {
+            busy = true;
             playSound('success');
             round++;
             setTimeout(() => {

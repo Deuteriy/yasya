@@ -27,6 +27,7 @@
     const POOL = ['🍎', '🍌', '🌟', '🎈', '🐟', '🌷', '🦋', '🍓'];
     const ROUNDS = 5;
     let round = 0;
+    let busy = false; // пока идёт переход между раундами — клики не считаются
     const phrase = 'Продолжи ряд. Что дальше?';
 
     const rowEl = document.getElementById('row');
@@ -34,6 +35,7 @@
     document.getElementById('say').addEventListener('click', () => speak(phrase));
 
     function startRound() {
+      busy = false;
       speak(phrase);
       // раунды 1–2: АБАБ, 3–4: ААББ, 5: АБВАБВ
       const [a, b, c] = shuffle(POOL);
@@ -63,7 +65,9 @@
         btn.textContent = val;
         btn.setAttribute('aria-label', 'вариант');
         btn.addEventListener('click', () => {
+          if (busy) return;
           if (val === ans) {
+            busy = true;
             q.textContent = val;
             q.classList.remove('pat-cell--q');
             playSound('success');

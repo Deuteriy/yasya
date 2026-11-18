@@ -32,6 +32,7 @@
     const ROUNDS = 5;
     let round = 0;
     let phrase = '';
+    let busy = false; // пока идёт переход между раундами — клики не считаются
 
     const taskEl = document.getElementById('task');
     const rowEl = document.getElementById('row');
@@ -39,6 +40,7 @@
     document.getElementById('say').addEventListener('click', () => speak(phrase));
 
     function startRound() {
+      busy = false;
       // сначала 2 варианта, со 3-го раунда — 3
       const count = round < 2 ? 2 : 3;
       const picks = shuffle(COLORS).slice(0, count);
@@ -55,7 +57,9 @@
         b.style.setProperty('--c', c.css);
         b.setAttribute('aria-label', c.name);
         b.addEventListener('click', () => {
+          if (busy) return;
           if (c === target) {
+            busy = true;
             playSound('success');
             b.classList.add('balloon--win');
             round++;

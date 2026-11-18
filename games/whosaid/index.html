@@ -38,10 +38,11 @@
       { e: '🐵', name: 'Обезьянка', file: 'monkey' },
       { e: '🦇', name: 'Летучая мышка', file: 'bat' },
       { e: '🐦', name: 'Птичка', file: 'bird' },
-      { e: '🐍', name: 'Змея', file: 'snake' },
+      { e: '🐍', name: 'Змейка', file: 'snake' },
     ];
     const ROUNDS = 5;
     let round = 0;
+    let busy = false; // пока идёт переход между раундами — клики не считаются
     let answer = null;
     let currentAudio = null;
 
@@ -60,6 +61,7 @@
     });
 
     function startRound() {
+      busy = false;
       speak('Кто сказал?');
       const picks = shuffle(ANIMALS).slice(0, 3);
       answer = picks[Math.floor(Math.random() * picks.length)];
@@ -71,7 +73,9 @@
         b.className = 'animal';
         b.innerHTML = `${a.e}<small>${a.name}</small>`;
         b.addEventListener('click', () => {
+          if (busy) return;
           if (a === answer) {
+            busy = true;
             playSound('success');
             speak(a.name);
             round++;

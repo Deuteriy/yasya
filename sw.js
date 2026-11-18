@@ -1,5 +1,5 @@
 // Service Worker: кэшируем приложение целиком — офлайн-работа на iPad
-const CACHE = 'yasya-v10';
+const CACHE = 'yasya-v11';
 // список озвучек (assets/voice/*.mp3) — генерируется voicegen/batch_yasya.py
 importScripts('./assets/voice/manifest.js');
 // Пути относительные: приложение живёт в подкаталоге на GitHub Pages
