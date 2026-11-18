@@ -216,6 +216,67 @@ function shuffle(arr) {
   return a;
 }
 
+// ===== Drag-and-drop на Pointer Events =====
+// Нативный HTML5 DnD не работает с тачем в iOS Safari, поэтому свой.
+// makeDraggable(el, { canDrag, onDrop }): onDrop(target, el) вызывается
+// при отпускании; target — ближайший предок с классом .drop-target под
+// пальцем или null. Просто тап (без движения) в onDrop не попадает.
+function makeDraggable(el, { canDrag, onDrop } = {}) {
+  el.style.touchAction = 'none';
+  el.addEventListener('pointerdown', (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    if (canDrag && !canDrag()) return;
+    e.preventDefault();
+    try {
+      el.setPointerCapture(e.pointerId);
+    } catch {}
+    let dragging = false;
+    let target = null;
+    let x = e.clientX;
+    let y = e.clientY;
+    const x0 = x;
+    const y0 = y;
+
+    const setHot = (t) => {
+      if (target === t) return;
+      if (target) target.classList.remove('drop-hot');
+      target = t;
+      if (target) target.classList.add('drop-hot');
+    };
+    const move = (ev) => {
+      x = ev.clientX;
+      y = ev.clientY;
+      if (!dragging && Math.hypot(x - x0, y - y0) > 8) {
+        dragging = true;
+        el.classList.add('is-dragging');
+      }
+      if (!dragging) return;
+      el.style.transform = `translate(${x - x0}px, ${y - y0}px) scale(1.08)`;
+      // спрячем от hit-теста, чтобы найти клетку под пальцем
+      el.style.pointerEvents = 'none';
+      const hit = document.elementFromPoint(x, y);
+      el.style.pointerEvents = '';
+      setHot(hit ? hit.closest('.drop-target') : null);
+    };
+    const up = () => {
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up);
+      el.removeEventListener('pointercancel', up);
+      const drop = target; // цель надо сохранить до очистки подсветки
+      setHot(null);
+      el.classList.remove('is-dragging');
+      // плавно вернуть на место (если игра не переместила сама)
+      el.style.transition = 'transform .25s ease';
+      el.style.transform = '';
+      setTimeout(() => (el.style.transition = ''), 300);
+      if (dragging && onDrop) onDrop(drop, el);
+    };
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+  });
+}
+
 // Плавающие фигурки на фоне — на каждой странице, для настроения
 (function decor() {
   const shapes = ['☀️', '☁️', '⭐', '🌈', '🎈', '☁️', '⭐'];

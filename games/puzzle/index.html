@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Пазл</title>
+</head>
+<body>
+  <main class="game">
+    <div class="game__top">
+      <a class="game__home" href="../../index.html" aria-label="Домой">🏠</a>
+      <div class="game__hint" id="hint">Собери картинку</div>
+    </div>
+    <div class="game__stage">
+      <div class="pz-wrap" id="wrap">
+        <div class="pz-board-row">
+          <div class="pz-board" id="board"></div>
+          <div class="pz-sample" id="sample" title="Образец"></div>
+        </div>
+        <div class="pz-tray" id="tray"></div>
+      </div>
+    </div>
+  </main>
+  <script src="../../js/core.js"></script>
+  <script>
+    const PICS = ['🦆', '🐠', '🍎', '🌻', '🚗', '🐻', '🦋', '🍓', '🐶', '🍊'];
+    const SIZES = [2, 2, 3]; // три раунда: два простых, один сложнее
+    let round = 0;
+    let pics = [];
+
+    const board = document.getElementById('board');
+    const tray = document.getElementById('tray');
+    const sample = document.getElementById('sample');
+    const hint = document.getElementById('hint');
+    const wrap = document.getElementById('wrap');
+
+    // Рисуем эмодзи на canvas и получаем картинку — её режем на части
+    function makePicURL(emoji, size = 480) {
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const ctx = c.getContext('2d');
+      ctx.font = Math.round(size * 0.78) + 'px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(emoji, size / 2, size / 2 + size * 0.04);
+      return c.toDataURL();
+    }
+
+    function startRound() {
+      const N = SIZES[round];
+      const url = makePicURL(pics.pop());
+      board.style.gridTemplateColumns = `repeat(${N}, 1fr)`;
+      wrap.style.setProperty('--pz', N === 2 ? 'min(24vmin, 150px)' : 'min(18vmin, 115px)');
+      hint.textContent = `Собери картинку ${round + 1}/${SIZES.length}`;
+      sample.style.backgroundImage = `url(${url})`;
+
+      board.innerHTML = '';
+      tray.innerHTML = '';
+      let placed = 0;
+
+      const cells = [];
+      for (let i = 0; i < N * N; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'pz-cell drop-target';
+        cell.dataset.i = i;
+        board.appendChild(cell);
+        cells.push(cell);
+      }
+
+      shuffle([...Array(N * N).keys()]).forEach((i) => {
+        const r = Math.floor(i / N);
+        const c = i % N;
+        const piece = document.createElement('button');
+        piece.className = 'pz-piece';
+        piece.dataset.i = i;
+        piece.style.backgroundImage = `url(${url})`;
+        piece.style.backgroundSize = `${N * 100}%`;
+        piece.style.backgroundPosition = `${(c / (N - 1)) * 100}% ${(r / (N - 1)) * 100}%`;
+        piece.setAttribute('aria-label', 'часть картинки');
+
+        makeDraggable(piece, {
+          canDrag: () => !piece.classList.contains('is-placed'),
+          onDrop: (target) => {
+            if (!target) return; // бросили мимо — молча вернёмся
+            if (target.dataset.i !== piece.dataset.i) {
+              playSound('fail');
+              return;
+            }
+            // правильная клетка: деталь встаёт навсегда
+            playSound('pop');
+            piece.classList.add('is-placed');
+            target.appendChild(piece);
+            placed++;
+            if (placed === N * N) {
+              playSound('success');
+              round++;
+              setTimeout(() => {
+                round >= SIZES.length
+                  ? showWin({ onAgain: restart })
+                  : startRound();
+              }, 900);
+            }
+          },
+        });
+        tray.appendChild(piece);
+      });
+    }
+
+    function restart() {
+      round = 0;
+      pics = shuffle(PICS).slice(0, SIZES.length);
+      startRound();
+    }
+
+    showStart({ emoji: '🧩', label: '▶ Собирать', onStart: () => { pics = pics.length ? pics : shuffle(PICS).slice(0, SIZES.length); startRound(); } });
+  </script>
+</body>
+</html>

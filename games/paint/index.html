@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Раскраска</title>
+</head>
+<body>
+  <main class="game">
+    <div class="game__top">
+      <a class="game__home" href="../../index.html" aria-label="Домой">🏠</a>
+      <button class="game__speak" id="clear" aria-label="Стереть">🧽</button>
+    </div>
+    <h1 class="game__task">Раскрась картинку</h1>
+    <div class="game__stage">
+      <div class="paint-wrap">
+        <div class="paint-card" id="card"></div>
+        <div class="palette" id="palette"></div>
+      </div>
+    </div>
+  </main>
+  <script src="../../js/core.js"></script>
+  <script>
+    // Картинки — простые SVG с зонами .fillzone
+    const PICTURES = [
+      // домик
+      `<svg viewBox="0 0 200 200">
+        <rect class="fillzone" x="56" y="28" width="18" height="34" rx="2"/>
+        <polygon class="fillzone" points="100,12 178,84 22,84"/>
+        <rect class="fillzone" x="42" y="82" width="116" height="92" rx="4"/>
+        <circle class="fillzone" cx="70" cy="112" r="14"/>
+        <rect class="fillzone" x="88" y="122" width="30" height="52" rx="3"/>
+      </svg>`,
+      // рыбка
+      `<svg viewBox="0 0 200 200">
+        <polygon class="fillzone" points="132,100 190,62 182,138"/>
+        <polygon class="fillzone" points="88,66 104,38 120,66"/>
+        <ellipse class="fillzone" cx="88" cy="100" rx="56" ry="36"/>
+        <circle class="fillzone" cx="52" cy="92" r="9"/>
+      </svg>`,
+      // ёлочка
+      `<svg viewBox="0 0 200 200">
+        <rect class="fillzone" x="88" y="138" width="24" height="40" rx="3"/>
+        <polygon class="fillzone" points="100,14 56,72 144,72"/>
+        <polygon class="fillzone" points="100,44 44,108 156,108"/>
+        <polygon class="fillzone" points="100,74 28,144 172,144"/>
+      </svg>`,
+      // цветок
+      `<svg viewBox="0 0 200 200">
+        <rect class="fillzone" x="95" y="116" width="10" height="68" rx="5"/>
+        <ellipse class="fillzone" cx="74" cy="150" rx="24" ry="11" transform="rotate(-32 74 150)"/>
+        <circle class="fillzone" cx="100" cy="50" r="22"/>
+        <circle class="fillzone" cx="133" cy="74" r="22"/>
+        <circle class="fillzone" cx="121" cy="112" r="22"/>
+        <circle class="fillzone" cx="79" cy="112" r="22"/>
+        <circle class="fillzone" cx="67" cy="74" r="22"/>
+        <circle class="fillzone" cx="100" cy="84" r="19"/>
+      </svg>`,
+      // машинка
+      `<svg viewBox="0 0 200 200">
+        <path class="fillzone" d="M52 108 L74 72 H126 L148 108 Z"/>
+        <rect class="fillzone" x="18" y="106" width="164" height="38" rx="14"/>
+        <rect class="fillzone" x="82" y="78" width="36" height="26" rx="4"/>
+        <circle class="fillzone" cx="56" cy="146" r="19"/>
+        <circle class="fillzone" cx="144" cy="146" r="19"/>
+      </svg>`,
+      // бабочка
+      `<svg viewBox="0 0 200 200">
+        <ellipse class="fillzone" cx="62" cy="66" rx="36" ry="32"/>
+        <ellipse class="fillzone" cx="138" cy="66" rx="36" ry="32"/>
+        <ellipse class="fillzone" cx="62" cy="134" rx="36" ry="32"/>
+        <ellipse class="fillzone" cx="138" cy="134" rx="36" ry="32"/>
+        <ellipse class="fillzone" cx="100" cy="100" rx="12" ry="46"/>
+      </svg>`,
+    ];
+
+    const COLORS = [
+      '#ff5a5f', '#ff9f43', '#ffd93d', '#6bcb77',
+      '#4d96ff', '#3f5fd8', '#c084fc', '#ff8fc7',
+      '#a0714f', '#ffffff',
+    ];
+
+    const card = document.getElementById('card');
+    const palette = document.getElementById('palette');
+    let color = COLORS[0];
+    let colored = 0;
+    let zones = [];
+    let won = false;
+
+    function loadPicture() {
+      won = false;
+      colored = 0;
+      card.innerHTML = PICTURES[Math.floor(Math.random() * PICTURES.length)];
+      zones = [...card.querySelectorAll('.fillzone')];
+      zones.forEach((z) => {
+        z.setAttribute('fill', '#ffffff');
+        z.addEventListener('click', () => {
+          if (z.getAttribute('fill') === color) return;
+          const was = z.dataset.colored === '1';
+          if (!was) {
+            z.dataset.colored = '1';
+            colored++;
+          }
+          z.setAttribute('fill', color);
+          playSound('pop');
+          if (colored === zones.length && !won) {
+            won = true;
+            speak('Красота!');
+            setTimeout(() => showWin({ onAgain: loadPicture }), 700);
+          }
+        });
+      });
+    }
+
+    // палитра
+    COLORS.forEach((c, i) => {
+      const b = document.createElement('button');
+      b.className = 'swatch';
+      b.style.background = c;
+      if (i === 0) b.classList.add('sel');
+      b.setAttribute('aria-label', 'цвет');
+      b.addEventListener('click', () => {
+        color = c;
+        palette.querySelectorAll('.swatch').forEach((s) => s.classList.remove('sel'));
+        b.classList.add('sel');
+        playSound('pop');
+      });
+      palette.appendChild(b);
+    });
+
+    document.getElementById('clear').addEventListener('click', () => {
+      zones.forEach((z) => {
+        z.setAttribute('fill', '#ffffff');
+        delete z.dataset.colored;
+      });
+      colored = 0;
+      won = false;
+      playSound('pop');
+    });
+
+    showStart({ emoji: '🖍️', label: '▶ Раскрасить', onStart: () => speak('Раскрась картинку') });
+    loadPicture();
+  </script>
+</body>
+</html>

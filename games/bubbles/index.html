@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Пузыри</title>
+</head>
+<body>
+  <main class="game">
+    <div class="game__top">
+      <a class="game__home" href="../../index.html" aria-label="Домой">🏠</a>
+      <div class="game__hint" id="score">🫧 0/10</div>
+    </div>
+    <div class="game__stage">
+      <div class="bub-field" id="field"></div>
+    </div>
+  </main>
+  <script src="../../js/core.js"></script>
+  <script>
+    const GOAL = 10;
+    const MAX_ON_SCREEN = 7;
+    let popped = 0;
+    let timer = null;
+    let finished = false;
+
+    const field = document.getElementById('field');
+    const score = document.getElementById('score');
+
+    function spawn() {
+      const alive = field.querySelectorAll('.bub:not(.bub--pop)').length;
+      if (finished || alive >= MAX_ON_SCREEN) return;
+      const b = document.createElement('button');
+      b.className = 'bub';
+      const size = 56 + Math.random() * 88;
+      b.style.width = b.style.height = size + 'px';
+      b.style.left = 2 + Math.random() * 86 + 'vw';
+      b.style.setProperty('--dur', 5 + Math.random() * 4 + 's');
+      b.style.setProperty('--wob', Math.random() * 36 - 18 + 'px');
+      b.setAttribute('aria-label', 'пузырь');
+      field.appendChild(b);
+      // улетел наверх — убираем
+      b.addEventListener('animationend', (e) => {
+        if (e.animationName === 'rise') b.remove();
+      });
+      b.addEventListener('pointerdown', () => {
+        if (finished || b.classList.contains('bub--pop')) return;
+        b.classList.add('bub--pop');
+        playSound('pop');
+        popped++;
+        score.textContent = `🫧 ${popped}/${GOAL}`;
+        setTimeout(() => b.remove(), 260);
+        if (popped === GOAL) {
+          finished = true;
+          clearInterval(timer);
+          setTimeout(() => showWin({ onAgain: reset }), 500);
+        }
+      });
+    }
+
+    function reset() {
+      popped = 0;
+      finished = false;
+      score.textContent = `🫧 0/${GOAL}`;
+      field.innerHTML = '';
+    }
+
+    function start() {
+      reset();
+      timer = setInterval(spawn, 800);
+      spawn();
+    }
+
+    showStart({ emoji: '🫧', label: '▶ Лопать', onStart: () => { speak('Лопай пузырьки'); start(); } });
+  </script>
+</body>
+</html>

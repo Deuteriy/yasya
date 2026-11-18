@@ -142,10 +142,14 @@ body {
 }
 
 .tile:nth-child(1) { animation-delay: 0.05s; }
-.tile:nth-child(2) { animation-delay: 0.12s; }
-.tile:nth-child(3) { animation-delay: 0.19s; }
-.tile:nth-child(4) { animation-delay: 0.26s; }
-.tile:nth-child(5) { animation-delay: 0.33s; }
+.tile:nth-child(2) { animation-delay: 0.11s; }
+.tile:nth-child(3) { animation-delay: 0.17s; }
+.tile:nth-child(4) { animation-delay: 0.23s; }
+.tile:nth-child(5) { animation-delay: 0.29s; }
+.tile:nth-child(6) { animation-delay: 0.35s; }
+.tile:nth-child(7) { animation-delay: 0.41s; }
+.tile:nth-child(8) { animation-delay: 0.47s; }
+.tile:nth-child(9) { animation-delay: 0.53s; }
 
 .tile:active {
   transform: scale(0.94);
@@ -163,6 +167,10 @@ body {
 .tile--count   { background: linear-gradient(165deg, #a5e8a0, #4cbb6b); }
 .tile--sounds  { background: linear-gradient(165deg, #ffb3d9, #f56ab0); }
 .tile--shadows { background: linear-gradient(165deg, #ccd9ea, #8aa7c4); }
+.tile--paint   { background: linear-gradient(165deg, #dcbcff, #a06bff); }
+.tile--puzzle  { background: linear-gradient(165deg, #9beedd, #2fb8a6); }
+.tile--bubbles { background: linear-gradient(165deg, #bfeaff, #54c2ff); }
+.tile--simon   { background: linear-gradient(165deg, #ffb3a0, #ff6f5e); }
 
 @keyframes pop-in {
   from {
@@ -571,6 +579,207 @@ body {
 .opt:active {
   transform: translateY(5px);
   box-shadow: var(--shadow-pop-press);
+}
+
+/* ===== Игра «Раскраска» ===== */
+.paint-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4vmin;
+}
+
+.paint-card {
+  background: #fff;
+  border: 6px solid #fff;
+  border-radius: 28px;
+  box-shadow: 0 14px 30px rgba(93, 64, 28, 0.18);
+  padding: 12px;
+}
+
+.paint-svg {
+  display: block;
+  width: min(66vmin, 430px);
+  height: auto;
+}
+
+.paint-svg .fillzone {
+  cursor: pointer;
+  transition: fill 0.15s ease;
+}
+
+.palette {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.swatch {
+  width: clamp(44px, 8vmin, 62px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  box-shadow: 0 5px 12px rgba(93, 64, 28, 0.2);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.swatch.sel {
+  transform: scale(1.18);
+  box-shadow: 0 0 0 4px var(--accent) inset, 0 5px 12px rgba(93, 64, 28, 0.25);
+}
+
+.swatch:active {
+  transform: scale(0.9);
+}
+
+/* ===== Игра «Пазл» ===== */
+.pz-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3.5vmin;
+  --pz: min(24vmin, 150px);
+}
+
+.pz-board-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.pz-board {
+  display: grid;
+  width: min(62vmin, 430px);
+  aspect-ratio: 1;
+  background: #fff;
+  border: 6px solid #fff;
+  border-radius: 22px;
+  box-shadow: 0 14px 30px rgba(93, 64, 28, 0.18);
+  padding: 8px;
+  gap: 6px;
+}
+
+.pz-cell {
+  position: relative;
+  border-radius: 12px;
+  background: #fff4e2;
+  box-shadow: 0 0 0 3px #f0e2cc inset;
+  transition: box-shadow 0.15s ease;
+}
+
+.pz-cell.drop-hot {
+  box-shadow: 0 0 0 4px var(--accent-2) inset;
+}
+
+.pz-sample {
+  width: clamp(64px, 13vmin, 96px);
+  aspect-ratio: 1;
+  border-radius: 18px;
+  border: 5px solid #fff;
+  box-shadow: 0 8px 18px rgba(93, 64, 28, 0.18);
+  background-size: cover;
+  background-position: center;
+  flex: none;
+}
+
+.pz-tray {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  min-height: var(--pz);
+}
+
+.pz-piece {
+  width: var(--pz);
+  height: var(--pz);
+  border: none;
+  border-radius: 12px;
+  background-color: #fff;
+  background-repeat: no-repeat;
+  box-shadow: 0 6px 14px rgba(93, 64, 28, 0.2);
+  cursor: grab;
+}
+
+.pz-piece.is-dragging {
+  z-index: 30;
+  cursor: grabbing;
+  box-shadow: 0 18px 32px rgba(93, 64, 28, 0.35);
+}
+
+.pz-piece.is-placed {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  box-shadow: none;
+  cursor: default;
+}
+
+/* ===== Игра «Пузыри» ===== */
+.bub-field {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.bub {
+  position: absolute;
+  bottom: -160px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.15) 24%),
+    radial-gradient(circle at 50% 50%, rgba(150, 215, 255, 0.25), rgba(90, 175, 255, 0.5));
+  box-shadow: inset -6px -10px 18px rgba(60, 130, 200, 0.35), 0 4px 10px rgba(93, 64, 28, 0.12);
+  animation: rise var(--dur, 7s) linear forwards;
+}
+
+@keyframes rise {
+  to {
+    transform: translate(var(--wob, 0px), calc(-100vh - 300px));
+  }
+}
+
+.bub--pop {
+  animation: bub-pop 0.24s ease-out forwards !important;
+}
+
+@keyframes bub-pop {
+  to {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* ===== Игра «Повтори» ===== */
+.simon {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  width: min(80vmin, 540px);
+}
+
+.simon__pad {
+  aspect-ratio: 1.6;
+  border-radius: 28px;
+  border: 6px solid #fff;
+  box-shadow: 0 10px 22px rgba(93, 64, 28, 0.2);
+  cursor: pointer;
+  transition: filter 0.12s ease, transform 0.12s ease;
+}
+
+.simon__pad:active {
+  transform: scale(0.96);
+}
+
+.simon__pad.lit {
+  filter: brightness(1.55) saturate(1.2);
+  transform: scale(1.04);
 }
 
 /* ===== Стартовый экран ===== */

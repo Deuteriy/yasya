@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Повтори</title>
+</head>
+<body>
+  <main class="game">
+    <div class="game__top">
+      <a class="game__home" href="../../index.html" aria-label="Домой">🏠</a>
+      <div class="game__hint" id="hint">Уровень 1/5</div>
+    </div>
+    <div class="game__stage">
+      <div class="simon" id="simon"></div>
+    </div>
+  </main>
+  <script src="../../js/core.js"></script>
+  <script>
+    // Четыре площадки, у каждой своя нота; повтори мелодию за планшетом
+    const PADS = [
+      { freq: 261.63, grad: 'linear-gradient(165deg,#a5e8a0,#4cbb6b)' }, // до
+      { freq: 329.63, grad: 'linear-gradient(165deg,#ffb0a0,#ff6f5e)' }, // ми
+      { freq: 392.0,  grad: 'linear-gradient(165deg,#ffe08a,#ffb14d)' }, // соль
+      { freq: 523.25, grad: 'linear-gradient(165deg,#bfe0ff,#54a8ff)' }, // до²
+    ];
+    const MAX_LEVEL = 5;
+    let seq = [];
+    let pos = 0;
+    let level = 1;
+    let canInput = false;
+
+    const hint = document.getElementById('hint');
+    const simon = document.getElementById('simon');
+    const padEls = [];
+
+    function tone(freq) {
+      if (!Settings.soundOn()) return;
+      try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        const t = ctx.currentTime;
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.3, t + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+        osc.connect(g);
+        g.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.5);
+      } catch {}
+    }
+
+    function flash(i, ms = 380) {
+      padEls[i].classList.add('lit');
+      setTimeout(() => padEls[i].classList.remove('lit'), ms);
+    }
+
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    async function showSeq() {
+      canInput = false;
+      hint.textContent = 'Смотри…';
+      await sleep(600);
+      for (const i of seq) {
+        flash(i);
+        tone(PADS[i].freq);
+        await sleep(520);
+      }
+      canInput = true;
+      pos = 0;
+      hint.textContent = `Уровень ${level}/${MAX_LEVEL} — твой ход!`;
+    }
+
+    function tap(i) {
+      if (!canInput) return;
+      flash(i, 250);
+      tone(PADS[i].freq);
+      if (i === seq[pos]) {
+        pos++;
+        if (pos === seq.length) {
+          // уровень пройден
+          canInput = false;
+          playSound('success');
+          if (level >= MAX_LEVEL) {
+            setTimeout(() => showWin({ onAgain: restart }), 700);
+            return;
+          }
+          level++;
+          seq.push(Math.floor(Math.random() * 4));
+          setTimeout(showSeq, 900);
+        }
+      } else {
+        // без проигрыша: мягко показываем последовательность ещё раз
+        canInput = false;
+        playSound('fail');
+        speak('Попробуй ещё');
+        setTimeout(showSeq, 1300);
+      }
+    }
+
+    function restart() {
+      level = 1;
+      seq = [Math.floor(Math.random() * 4)];
+      showSeq();
+    }
+
+    PADS.forEach((p, i) => {
+      const b = document.createElement('button');
+      b.className = 'simon__pad';
+      b.style.background = p.grad;
+      b.setAttribute('aria-label', 'кнопка');
+      b.addEventListener('pointerdown', () => tap(i));
+      simon.appendChild(b);
+      padEls.push(b);
+    });
+
+    showStart({
+      emoji: '🔔',
+      label: '▶ Играть',
+      onStart: () => {
+        speak('Повтори за мной');
+        level = 1;
+        seq = [Math.floor(Math.random() * 4)];
+        setTimeout(showSeq, 800);
+      },
+    });
+  </script>
+</body>
+</html>
