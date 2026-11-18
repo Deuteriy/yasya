@@ -1,5 +1,7 @@
 // Service Worker: кэшируем приложение целиком — офлайн-работа на iPad
-const CACHE = 'yasya-v9';
+const CACHE = 'yasya-v10';
+// список озвучек (assets/voice/*.mp3) — генерируется voicegen/batch_yasya.py
+importScripts('./assets/voice/manifest.js');
 // Пути относительные: приложение живёт в подкаталоге на GitHub Pages
 // (username.github.io/Yasya/), абсолютные "/..." ломались бы.
 const ASSETS = [
@@ -46,7 +48,8 @@ const ASSETS = [
   './games/pattern/index.html',
   './games/maze/index.html',
   './games/piano/index.html',
-  './record/index.html',
+  './assets/voice/manifest.js',
+  ...VOICE_FILES,
 ];
 
 self.addEventListener('install', (event) => {

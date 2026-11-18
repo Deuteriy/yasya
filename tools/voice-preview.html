@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Проверка озвучки</title>
+  <style>
+    body { font-family: sans-serif; max-width: 720px; margin: 0 auto; padding: 20px; }
+    button { font-size: 16px; padding: 6px 14px; margin: 2px 0 2px 8px; cursor: pointer; }
+    li { margin: 4px 0; list-style: none; display: flex; align-items: center; gap: 8px; }
+    h2 { margin-top: 24px; }
+    .ok { color: #2a7; } .miss { color: #c33; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Проверка озвучки (dev)</h1>
+  <p>Список = batch_yasya.py. <span class="miss">красным</span> — файла нет (упадёт в системный синтез).</p>
+  <div id="list"></div>
+  <script>
+    // Копия списка из voicegen/batch_yasya.py — держать синхронно!
+    const PHRASES = [
+      'Покажи красный шарик', 'Покажи синий шарик', 'Покажи жёлтый шарик',
+      'Покажи зелёный шарик', 'Покажи оранжевый шарик', 'Покажи фиолетовый шарик',
+      'Найди одинаковых зверят', 'собачка', 'кошечка', 'зайчик', 'лисёнок',
+      'мишка', 'панда', 'поросёнок', 'корова', 'лягушка', 'лев', 'тигр', 'обезьянка',
+      'Посчитай и покажи число', '1', '2', '3', '4', '5',
+      'Кто живёт на дворе?', 'Кто сказал?', 'Корова', 'Собака',
+      'Кошка', 'Овечка', 'Поросёнок', 'Лошадь', 'Петух', 'Курочка', 'Коза', 'Пчела',
+      'Волк', 'Лев', 'Обезьянка', 'Летучая мышка', 'Птичка', 'Змея',
+      'Найди такую же картинку',
+      'Что будем раскрашивать?', 'Раскрась картинку пальчиком', 'Ух ты, красота!',
+      'Раскрась кошечку', 'Раскрась собачку', 'Раскрась зайчика', 'Раскрась лисёнка',
+      'Раскрась мишку', 'Раскрась лягушку', 'Раскрась уточку', 'Раскрась бабочку',
+      'Раскрась божью коровку', 'Раскрась подсолнух', 'Раскрась дерево',
+      'Раскрась яблоко', 'Раскрась клубнику', 'Раскрась машинку', 'Раскрась ракету',
+      'Раскрась шарик',
+      'Лопай пузырьки',
+      'Повтори за мной', 'Попробуй ещё',
+      'Разложи по корзинкам',
+      'Где большой?', 'Где маленький?',
+      'Найди лишний предмет',
+      'Продолжи ряд. Что дальше?',
+      'Проведи мышку к сыру',
+      'Поиграй на пианино',
+      'Привет! Это мой голос.',
+    ];
+
+    function fnv1a(text) {
+      let h = 0x811c9dc5;
+      for (const b of new TextEncoder().encode(text)) h = (Math.imul(h ^ b, 16777619)) >>> 0;
+      return h.toString(16).padStart(8, '0');
+    }
+
+    const list = document.getElementById('list');
+    PHRASES.forEach((text, i) => {
+      const url = `../assets/voice/${fnv1a(text)}.mp3`;
+      const li = document.createElement('li');
+      const b = document.createElement('button');
+      b.textContent = '▶';
+      b.onclick = () => new Audio(url).play();
+      const probe = new Audio();
+      probe.preload = 'metadata';
+      probe.src = url;
+      probe.onerror = () => (li.querySelector('span').className = 'miss');
+      probe.onloadstart = () => {};
+      li.appendChild(b);
+      const s = document.createElement('span');
+      s.textContent = text;
+      fetch(url, { method: 'HEAD' })
+        .then((r) => { if (!r.ok) s.className = 'miss'; else s.className = 'ok'; })
+        .catch(() => (s.className = 'miss'));
+      li.appendChild(s);
+      list.appendChild(li);
+    });
+  </script>
+</body>
+</html>

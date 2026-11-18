@@ -113,62 +113,27 @@ async function playSound(kind = 'pop') {
   }
 }
 
-// ===== Речь: сперва записанный голос родителя, потом синтез =====
-// Записи живут в IndexedDB (ключ — фраза, значение — Blob).
+// ===== Речь: готовые записи голосом (assets/voice), синтез — запасной вариант =====
+// Файлы сгенерированы клоном голоса (voicegen/batch_yasya.py).
+// Имя файла = FNV-1a-хэш фразы (hex) — одинаково вычисляется в JS и генераторе.
 
-let _voiceDB = null;
-function getVoiceDB() {
-  return new Promise((resolve, reject) => {
-    if (_voiceDB) return resolve(_voiceDB);
-    try {
-      const req = indexedDB.open('yasya-voice', 1);
-      req.onupgradeneeded = () => req.result.createObjectStore('phrases');
-      req.onsuccess = () => {
-        _voiceDB = req.result;
-        resolve(_voiceDB);
-      };
-      req.onerror = () => reject(req.error);
-    } catch (e) {
-      reject(e);
-    }
-  });
+const VOICE_BASE = (() => {
+  try {
+    return new URL('../assets/voice/', document.currentScript.src).href;
+  } catch {
+    return '';
+  }
+})();
+
+function fnv1a(text) {
+  let h = 0x811c9dc5;
+  for (const b of new TextEncoder().encode(text)) {
+    h = Math.imul(h ^ b, 16777619) >>> 0;
+  }
+  return h.toString(16).padStart(8, '0');
 }
 
-function voiceGet(text) {
-  return getVoiceDB()
-    .then(
-      (db) =>
-        new Promise((resolve) => {
-          const r = db.transaction('phrases').objectStore('phrases').get(text);
-          r.onsuccess = () => resolve(r.result || null);
-          r.onerror = () => resolve(null);
-        })
-    )
-    .catch(() => null);
-}
-
-function voicePut(text, blob) {
-  return getVoiceDB().then(
-    (db) =>
-      new Promise((resolve, reject) => {
-        const r = db.transaction('phrases', 'readwrite').objectStore('phrases').put(blob, text);
-        r.onsuccess = resolve;
-        r.onerror = () => reject(r.error);
-      })
-  );
-}
-
-function voiceDelete(text) {
-  return getVoiceDB().then(
-    (db) =>
-      new Promise((resolve) => {
-        const r = db.transaction('phrases', 'readwrite').objectStore('phrases').delete(text);
-        r.onsuccess = resolve;
-        r.onerror = resolve;
-      })
-  );
-}
-
+const voiceMiss = new Set(); // фразы без файла — сразу синтез, без лишних 404
 let _voiceAudio = null;
 
 // Синтез речи (системный голос) — запасной вариант
@@ -196,50 +161,25 @@ function ttsSpeak(text) {
 
 async function speak(text) {
   if (!Settings.soundOn() || !text) return;
-  // есть ли запись голосом родителя?
-  const blob = await voiceGet(text);
-  if (blob) {
+  if (_voiceAudio) {
+    _voiceAudio.pause();
+    _voiceAudio = null;
+  }
+  if (!voiceMiss.has(text)) {
+    const a = new Audio(VOICE_BASE + fnv1a(text) + '.mp3');
+    _voiceAudio = a;
     try {
-      speechSynthesis.cancel();
-      if (_voiceAudio) _voiceAudio.pause();
-      const a = new Audio(URL.createObjectURL(blob));
-      _voiceAudio = a;
-      a.addEventListener('ended', () => URL.revokeObjectURL(a.src));
       await a.play();
       return;
-    } catch {}
+    } catch (e) {
+      // файла нет (404/формат) — запоминаем и больше не пробуем;
+      // блокировка автоплея (NotAllowedError) не кэшируем
+      if (e && e.name === 'NotSupportedError') voiceMiss.add(text);
+      _voiceAudio = null;
+    }
   }
   ttsSpeak(text);
 }
-
-// Все реплики приложения — для студии записи голоса (tools/record).
-// Держать в точном соответствии с фразами в коде игр!
-const VOICE_PHRASES = {
-  Цвета: ['Покажи красный шарик', 'Покажи синий шарик', 'Покажи жёлтый шарик',
-    'Покажи зелёный шарик', 'Покажи оранжевый шарик', 'Покажи фиолетовый шарик'],
-  Пары: ['Найди одинаковых зверят', 'собачка', 'кошечка', 'зайчик', 'лисёнок',
-    'мишка', 'панда', 'поросёнок', 'корова', 'лягушка', 'лев', 'тигр', 'обезьянка'],
-  Счёт: ['Посчитай и покажи число', '1', '2', '3', '4', '5'],
-  'Звуки и «Кто сказал?»': ['Кто живёт на дворе?', 'Кто сказал?', 'Корова', 'Собака',
-    'Кошка', 'Овечка', 'Поросёнок', 'Лошадь', 'Петух', 'Курочка', 'Коза', 'Пчела',
-    'Волк', 'Лев', 'Обезьянка', 'Летучая мышка', 'Птичка', 'Змея'],
-  Тени: ['Найди такую же картинку'],
-  Раскраска: ['Что будем раскрашивать?', 'Раскрась картинку пальчиком', 'Ух ты, красота!',
-    'Раскрась кошечку', 'Раскрась собачку', 'Раскрась зайчика', 'Раскрась лисёнка',
-    'Раскрась мишку', 'Раскрась лягушку', 'Раскрась уточку', 'Раскрась бабочку',
-    'Раскрась божью коровку', 'Раскрась подсолнух', 'Раскрась дерево',
-    'Раскрась яблоко', 'Раскрась клубнику', 'Раскрась машинку', 'Раскрась ракету',
-    'Раскрась шарик'],
-  Пузыри: ['Лопай пузырьки'],
-  Повтори: ['Повтори за мной', 'Попробуй ещё'],
-  Корзины: ['Разложи по корзинкам'],
-  Большой: ['Где большой?', 'Где маленький?'],
-  Лишний: ['Найди лишний предмет'],
-  Ряд: ['Продолжи ряд. Что дальше?'],
-  Лабиринт: ['Проведи мышку к сыру'],
-  Пианино: ['Поиграй на пианино'],
-  Панель: ['Привет! Это мой голос.'],
-};
 
 // ===== Сохранение прогресса (ключи вида yasya.<game>.<key>) =====
 const Progress = {
