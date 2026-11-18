@@ -1,12 +1,34 @@
+/* ===== Шрифт (самохостинг, офлайн) ===== */
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 400 1000;
+  font-display: swap;
+  src: url('../assets/fonts/nunito-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 400 1000;
+  font-display: swap;
+  src: url('../assets/fonts/nunito-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /* ===== База ===== */
 :root {
-  --bg: #fff9f0;
+  --bg: #fdf3e7;
   --card: #ffffff;
   --accent: #ffb344;
   --accent-2: #4ecdc4;
-  --text: #4a3b2a;
-  --shadow: 0 6px 0 rgba(0, 0, 0, 0.12);
-  --radius: 24px;
+  --text: #514237;
+  --text-soft: #8a7663;
+  /* «толстая» кнопка: тень-подставка + мягкая тень */
+  --btn-side: #ead9c0;
+  --shadow-pop: 0 8px 0 var(--btn-side), 0 16px 28px rgba(93, 64, 28, 0.16);
+  --shadow-pop-press: 0 3px 0 var(--btn-side), 0 8px 14px rgba(93, 64, 28, 0.14);
+  --radius: 26px;
 }
 
 * {
@@ -17,14 +39,18 @@
 }
 
 body {
-  font-family: -apple-system, "SF Pro Rounded", "Segoe UI", sans-serif;
-  background: var(--bg);
+  font-family: 'Nunito', ui-rounded, -apple-system, 'Segoe UI', sans-serif;
   color: var(--text);
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none; /* без системного меню на долгом нажатии */
   touch-action: manipulation; /* отключает двойной тап-зум */
+  background:
+    radial-gradient(1100px 750px at 12% -8%, #ffe9d0 0%, rgba(255, 233, 208, 0) 58%),
+    radial-gradient(950px 700px at 108% 18%, #d9f1ff 0%, rgba(217, 241, 255, 0) 55%),
+    radial-gradient(900px 900px at 50% 118%, #ffe1ee 0%, rgba(255, 225, 238, 0) 60%),
+    var(--bg);
 }
 
 .hub,
@@ -33,74 +59,123 @@ body {
   height: 100dvh;
 }
 
+/* ===== Плавающий декор на фоне (добавляется из core.js) ===== */
+.bg-decor {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.bg-decor span {
+  position: absolute;
+  opacity: 0.32;
+  filter: saturate(0.85);
+  animation: floaty ease-in-out infinite alternate;
+}
+
+@keyframes floaty {
+  from {
+    transform: translateY(-14px) rotate(-7deg);
+  }
+  to {
+    transform: translateY(14px) rotate(7deg);
+  }
+}
+
+.hub,
+.game,
+.win,
+.panel {
+  position: relative;
+  z-index: 1;
+}
+
 /* ===== Хаб ===== */
 .hub {
   display: flex;
   flex-direction: column;
-  padding: max(16px, env(safe-area-inset-top)) 24px max(16px, env(safe-area-inset-bottom));
-  gap: 16px;
+  padding: max(16px, env(safe-area-inset-top)) 26px max(16px, env(safe-area-inset-bottom));
+  gap: 10px;
 }
 
 .hub__title {
   text-align: center;
-  font-size: clamp(28px, 5vmin, 44px);
-  font-weight: 800;
+  font-size: clamp(30px, 5.4vmin, 48px);
+  font-weight: 1000;
   letter-spacing: 0.5px;
-}
-
-.hub__grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  grid-auto-rows: auto;
-  gap: 20px;
-  align-content: center;
+  color: #6b4f33;
+  text-shadow: 0 3px 0 rgba(255, 255, 255, 0.9);
+  animation: drop-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
 }
 
 /* ===== Плитка игры ===== */
+.hub__grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-auto-rows: auto;
+  gap: 22px;
+  align-content: center;
+}
+
 .tile {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  background: var(--card);
+  gap: 8px;
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  border: 4px solid transparent;
-  font-size: clamp(18px, 3vmin, 26px);
-  font-weight: 700;
-  color: var(--text);
+  border: 6px solid #fff;
+  box-shadow: 0 12px 26px rgba(93, 64, 28, 0.18);
+  font-size: clamp(19px, 3.2vmin, 27px);
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
   text-decoration: none;
   cursor: pointer;
-  transition: transform 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
   aspect-ratio: 1;
   max-height: 260px;
+  animation: pop-in 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
 }
+
+.tile:nth-child(1) { animation-delay: 0.05s; }
+.tile:nth-child(2) { animation-delay: 0.12s; }
+.tile:nth-child(3) { animation-delay: 0.19s; }
+.tile:nth-child(4) { animation-delay: 0.26s; }
+.tile:nth-child(5) { animation-delay: 0.33s; }
 
 .tile:active {
   transform: scale(0.94);
+  box-shadow: 0 6px 14px rgba(93, 64, 28, 0.18);
 }
 
 .tile__emoji {
-  font-size: clamp(40px, 8vmin, 72px);
-  line-height: 1;
+  font-size: clamp(46px, 9vmin, 80px);
+  line-height: 1.1;
+  filter: drop-shadow(0 5px 6px rgba(0, 0, 0, 0.22));
 }
 
-.tile--colors {
-  background: linear-gradient(160deg, #ffe0b3, #ffb344);
+.tile--colors  { background: linear-gradient(165deg, #ffcf7d, #ff9a3d); }
+.tile--memory  { background: linear-gradient(165deg, #8fd0ff, #3f8ce8); }
+.tile--count   { background: linear-gradient(165deg, #a5e8a0, #4cbb6b); }
+.tile--sounds  { background: linear-gradient(165deg, #ffb3d9, #f56ab0); }
+.tile--shadows { background: linear-gradient(165deg, #ccd9ea, #8aa7c4); }
+
+@keyframes pop-in {
+  from {
+    transform: scale(0) rotate(-8deg);
+    opacity: 0;
+  }
 }
-.tile--memory {
-  background: linear-gradient(160deg, #b3e0ff, #4d96ff);
-}
-.tile--count {
-  background: linear-gradient(160deg, #c8f0c8, #6bcb77);
-}
-.tile--sounds {
-  background: linear-gradient(160deg, #ffd1e8, #ff8fc7);
-}
-.tile--shadows {
-  background: linear-gradient(160deg, #dfe6f0, #9fb3c8);
+
+@keyframes drop-in {
+  from {
+    transform: translateY(-40px);
+    opacity: 0;
+  }
 }
 
 /* ===== Общий каркас игры ===== */
@@ -108,39 +183,51 @@ body {
   display: flex;
   flex-direction: column;
   padding: max(12px, env(safe-area-inset-top)) 22px max(12px, env(safe-area-inset-bottom));
+  animation: fade-in 0.35s ease;
 }
 
 .game__top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 52px;
+  min-height: 56px;
 }
 
-.game__home {
-  font-size: 34px;
-  text-decoration: none;
-  padding: 4px 10px;
-}
-
+.game__home,
 .game__speak {
-  font-size: 30px;
-  background: none;
-  border: none;
-  padding: 4px 10px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  background: #fff;
+  box-shadow: 0 6px 14px rgba(93, 64, 28, 0.16);
+  font-size: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.12s ease;
+}
+
+.game__home:active,
+.game__speak:active {
+  transform: scale(0.9);
 }
 
 .game__task {
   text-align: center;
-  font-size: clamp(22px, 4.5vmin, 36px);
-  font-weight: 800;
+  font-size: clamp(23px, 4.6vmin, 38px);
+  font-weight: 1000;
+  color: #6b4f33;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.8);
   margin: 4px 0;
 }
 
 .game__hint {
   text-align: center;
-  opacity: 0.6;
+  color: var(--text-soft);
+  font-weight: 700;
   font-size: clamp(15px, 2.6vmin, 20px);
 }
 
@@ -151,56 +238,86 @@ body {
   justify-content: center;
 }
 
-/* ===== Кнопки ===== */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* ===== Кнопки-«конфеты» ===== */
 .btn {
   display: inline-block;
   border: none;
-  border-radius: 20px;
+  border-radius: 22px;
   background: #fff;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-pop);
   font: inherit;
-  font-weight: 800;
-  padding: 14px 24px;
+  font-weight: 900;
+  padding: 14px 26px;
   font-size: clamp(18px, 3vmin, 24px);
   color: var(--text);
   text-align: center;
   text-decoration: none;
   cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
 .btn:active {
-  transform: scale(0.95);
+  transform: translateY(5px);
+  box-shadow: var(--shadow-pop-press);
 }
 
 /* ===== Игра «Цвета»: шарики ===== */
 .balloons {
   display: flex;
-  gap: 7vmin;
+  gap: 8vmin;
   flex-wrap: wrap;
   justify-content: center;
+  padding-top: 14px;
 }
 
 .balloon {
-  width: clamp(90px, 19vmin, 160px);
+  --c: #f00;
+  width: clamp(96px, 20vmin, 168px);
   aspect-ratio: 0.86;
   border-radius: 50% 50% 50% 50% / 44% 44% 56% 56%;
-  box-shadow: inset -12px -16px 0 rgba(0, 0, 0, 0.08);
-  position: relative;
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 26%),
+    var(--c);
   border: none;
+  position: relative;
   cursor: pointer;
   transition: transform 0.15s;
+  box-shadow: inset -12px -16px 24px rgba(0, 0, 0, 0.14), 0 14px 22px rgba(93, 64, 28, 0.2);
+  animation: sway 4s ease-in-out infinite alternate;
 }
 
-.balloon::after {
-  /* хвостик шарика */
+.balloon:nth-child(2) { animation-delay: 0.7s; }
+.balloon:nth-child(3) { animation-delay: 1.3s; }
+
+/* верёвочка */
+.balloon::before {
   content: "";
   position: absolute;
-  bottom: -12%;
+  top: calc(100% + 10px);
+  left: 50%;
+  width: 3px;
+  height: clamp(40px, 8vmin, 70px);
+  border-radius: 3px;
+  background: linear-gradient(rgba(93, 64, 28, 0.4), rgba(93, 64, 28, 0.05));
+}
+
+/* узелок */
+.balloon::after {
+  content: "";
+  position: absolute;
+  bottom: -7%;
   left: 50%;
   transform: translateX(-50%);
-  width: 16%;
-  height: 14%;
-  background: inherit;
+  width: 15%;
+  height: 12%;
+  background: var(--c);
   clip-path: polygon(50% 0, 100% 100%, 0 100%);
 }
 
@@ -212,16 +329,25 @@ body {
   animation: flyaway 0.7s ease-in forwards;
 }
 
+@keyframes sway {
+  from {
+    transform: rotate(-3deg) translateY(0);
+  }
+  to {
+    transform: rotate(3deg) translateY(-8px);
+  }
+}
+
 @keyframes flyaway {
   to {
-    transform: translateY(-110vh) rotate(25deg);
+    transform: translateY(-115vh) rotate(25deg);
     opacity: 0;
   }
 }
 
 /* ===== Тряска при ошибке ===== */
 .shake {
-  animation: shake 0.4s;
+  animation: shake 0.4s !important;
 }
 
 @keyframes shake {
@@ -241,13 +367,13 @@ body {
 .cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: 16px;
   width: min(92vw, 560px);
 }
 
 .card {
   aspect-ratio: 3 / 4;
-  perspective: 600px;
+  perspective: 700px;
   border: none;
   background: none;
   padding: 0;
@@ -271,27 +397,32 @@ body {
   inset: 0;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  border-radius: 18px;
+  border-radius: 20px;
+  border: 5px solid #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow);
+  box-shadow: 0 10px 20px rgba(93, 64, 28, 0.18);
 }
 
 .card__back {
-  background: linear-gradient(160deg, #7ec8ff, #4d96ff);
-  font-size: clamp(28px, 6vmin, 44px);
+  background:
+    radial-gradient(circle at 22% 22%, rgba(255, 255, 255, 0.3) 0 10%, transparent 11%),
+    radial-gradient(circle at 78% 68%, rgba(255, 255, 255, 0.3) 0 8%, transparent 9%),
+    linear-gradient(160deg, #8ed2ff, #3f8ce8);
+  font-size: clamp(30px, 6vmin, 46px);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
 }
 
 .card__front {
-  background: #fff;
+  background: linear-gradient(180deg, #ffffff, #fff7ec);
   transform: rotateY(180deg);
-  font-size: clamp(40px, 9vmin, 72px);
+  font-size: clamp(42px, 9.5vmin, 76px);
 }
 
 .card.is-done .card__front {
-  background: #e8fbf0;
-  box-shadow: 0 0 0 5px #6bcb77 inset;
+  background: linear-gradient(180deg, #eafff2, #d2f7e2);
+  box-shadow: 0 0 0 5px #6bcb77 inset, 0 10px 20px rgba(93, 64, 28, 0.18);
 }
 
 /* ===== Игра «Счёт» ===== */
@@ -311,7 +442,8 @@ body {
 }
 
 .count-item {
-  font-size: clamp(46px, 11vmin, 90px);
+  font-size: clamp(48px, 11.5vmin, 94px);
+  filter: drop-shadow(0 6px 6px rgba(93, 64, 28, 0.25));
   animation: bob 2s ease-in-out infinite;
 }
 
@@ -325,66 +457,69 @@ body {
 
 @keyframes bob {
   50% {
-    transform: translateY(-8px);
+    transform: translateY(-10px);
   }
 }
 
 .digits {
   display: flex;
-  gap: 4vmin;
+  gap: 4.5vmin;
 }
 
 .digit {
-  width: clamp(72px, 15vmin, 130px);
+  width: clamp(76px, 15.5vmin, 132px);
   aspect-ratio: 1;
-  border-radius: 24px;
-  font-size: clamp(36px, 8vmin, 64px);
-  font-weight: 800;
-  background: #fff;
-  box-shadow: var(--shadow);
+  border-radius: 26px;
   border: none;
+  font: inherit;
+  font-size: clamp(38px, 8.5vmin, 66px);
+  font-weight: 1000;
+  background: #fff;
+  box-shadow: var(--shadow-pop);
   color: var(--text);
-  font-family: inherit;
   cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
 .digit:active {
-  transform: scale(0.93);
+  transform: translateY(5px);
+  box-shadow: var(--shadow-pop-press);
 }
 
 /* ===== Игра «Звуки»: звери ===== */
 .zoo {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  gap: 16px;
   width: min(94vw, 720px);
 }
 
 .animal {
   aspect-ratio: 1;
-  border-radius: 22px;
-  border: none;
-  background: #fff;
-  box-shadow: var(--shadow);
-  font-size: clamp(40px, 9vmin, 80px);
+  border-radius: 24px;
+  border: 5px solid #fff;
+  background: linear-gradient(180deg, #ffffff, #fff4e2);
+  box-shadow: 0 10px 20px rgba(93, 64, 28, 0.16);
+  font-size: clamp(42px, 9.5vmin, 82px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
   cursor: pointer;
+  transition: transform 0.12s ease;
 }
 
 .animal small {
+  font: inherit;
+  font-weight: 900;
   font-size: clamp(12px, 2.2vmin, 18px);
-  font-weight: 700;
-  color: var(--text);
-  opacity: 0.7;
-  font-family: inherit;
+  color: var(--text-soft);
 }
 
 .animal.is-heard {
-  box-shadow: var(--shadow), 0 0 0 4px var(--accent-2) inset;
+  background: linear-gradient(180deg, #eafffb, #ccf6ef);
+  box-shadow: 0 0 0 5px var(--accent-2) inset, 0 10px 20px rgba(93, 64, 28, 0.16);
 }
 
 .animal:active {
@@ -400,19 +535,20 @@ body {
 }
 
 .shadow-card {
-  width: clamp(140px, 30vmin, 240px);
+  width: clamp(150px, 31vmin, 250px);
   aspect-ratio: 1;
-  background: #fff;
-  border-radius: 26px;
-  box-shadow: var(--shadow);
+  background: linear-gradient(180deg, #ffffff, #fff4e2);
+  border: 5px solid #fff;
+  border-radius: 28px;
+  box-shadow: 0 12px 26px rgba(93, 64, 28, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(80px, 18vmin, 150px);
+  font-size: clamp(84px, 19vmin, 155px);
 }
 
 .shadow-card span {
-  filter: brightness(0) opacity(0.82);
+  filter: brightness(0) opacity(0.8);
 }
 
 .options {
@@ -421,76 +557,78 @@ body {
 }
 
 .opt {
-  width: clamp(96px, 18vmin, 150px);
+  width: clamp(100px, 19vmin, 155px);
   aspect-ratio: 1;
-  border-radius: 24px;
-  background: #fff;
-  box-shadow: var(--shadow);
-  border: none;
-  font-size: clamp(44px, 10vmin, 76px);
+  border-radius: 26px;
+  border: 5px solid #fff;
+  background: linear-gradient(180deg, #ffffff, #fff4e2);
+  box-shadow: var(--shadow-pop);
+  font-size: clamp(46px, 10.5vmin, 78px);
   cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
 .opt:active {
-  transform: scale(0.93);
+  transform: translateY(5px);
+  box-shadow: var(--shadow-pop-press);
 }
 
 /* ===== Экран победы ===== */
 .win {
   position: fixed;
   inset: 0;
-  background: rgba(255, 249, 240, 0.95);
+  background:
+    radial-gradient(800px 600px at 50% -10%, #fff3d6 0%, rgba(255, 243, 214, 0) 60%),
+    rgba(253, 243, 231, 0.96);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 50;
-  animation: fadein 0.3s;
+  animation: fade-in 0.3s;
 }
 
 .win__card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   text-align: center;
+  animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .win__emoji {
-  font-size: clamp(80px, 20vmin, 160px);
+  font-size: clamp(90px, 21vmin, 170px);
+  filter: drop-shadow(0 12px 14px rgba(93, 64, 28, 0.3));
   animation: bounce 1s ease-in-out infinite;
 }
 
 .win__title {
-  font-size: clamp(34px, 7vmin, 56px);
-  font-weight: 800;
+  font-size: clamp(36px, 7.5vmin, 60px);
+  font-weight: 1000;
+  color: #6b4f33;
 }
 
 .win__stars {
   font-size: clamp(20px, 4vmin, 30px);
-  font-weight: 700;
+  font-weight: 900;
+  color: var(--text-soft);
 }
 
 .win__btn {
-  min-width: 230px;
-}
-
-@keyframes fadein {
-  from {
-    opacity: 0;
-  }
+  min-width: 240px;
 }
 
 @keyframes bounce {
   50% {
-    transform: translateY(-14px);
+    transform: translateY(-16px);
   }
 }
 
 .confetti {
   position: fixed;
   top: -20px;
-  width: 12px;
-  height: 18px;
+  width: 13px;
+  height: 19px;
   border-radius: 3px;
   z-index: 51;
   pointer-events: none;
@@ -507,27 +645,28 @@ body {
 .panel {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(60, 42, 24, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 60;
+  animation: fade-in 0.25s;
 }
 
 .panel__card {
   background: #fff;
-  border-radius: 26px;
+  border-radius: 28px;
   padding: 28px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  width: min(88vw, 420px);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  width: min(88vw, 430px);
+  box-shadow: 0 24px 60px rgba(40, 24, 8, 0.35);
 }
 
 .panel__title {
-  font-size: 22px;
-  font-weight: 800;
+  font-size: 23px;
+  font-weight: 1000;
   text-align: center;
 }
 
@@ -535,19 +674,33 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   font-size: 18px;
+  font-weight: 800;
+}
+
+.select {
+  font: inherit;
   font-weight: 700;
+  font-size: 16px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 3px solid var(--btn-side);
+  background: #fff;
+  color: var(--text);
+  max-width: 60%;
 }
 
 .switch {
   width: 64px;
   height: 36px;
   border-radius: 18px;
-  background: #ccc;
+  background: #d9cbb8;
   position: relative;
   border: none;
   transition: background 0.2s;
   cursor: pointer;
+  flex: none;
 }
 
 .switch::after {
@@ -559,6 +712,7 @@ body {
   height: 28px;
   border-radius: 50%;
   background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
   transition: left 0.2s;
 }
 

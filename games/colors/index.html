@@ -52,7 +52,7 @@
       shuffle(picks).forEach((c) => {
         const b = document.createElement('button');
         b.className = 'balloon';
-        b.style.background = c.css;
+        b.style.setProperty('--c', c.css);
         b.setAttribute('aria-label', c.name);
         b.addEventListener('click', () => {
           if (c === target) {

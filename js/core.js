@@ -14,6 +14,18 @@ const Settings = {
       localStorage.setItem('yasya.settings.sound', on ? 'on' : 'off');
     } catch {}
   },
+  voiceURI() {
+    try {
+      return localStorage.getItem('yasya.settings.voice') || '';
+    } catch {
+      return '';
+    }
+  },
+  setVoice(uri) {
+    try {
+      localStorage.setItem('yasya.settings.voice', uri);
+    } catch {}
+  },
 };
 
 // iOS блокирует звук до первого пользовательского касания.
@@ -93,7 +105,16 @@ function speak(text) {
   try {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'ru-RU';
+    // голос, выбранный в панели родителей (пусто = системный по умолчанию)
+    const uri = Settings.voiceURI();
+    if (uri) {
+      const v = speechSynthesis.getVoices().find((x) => x.voiceURI === uri);
+      if (v) {
+        u.voice = v;
+        u.lang = v.lang;
+      }
+    }
+    if (!u.lang) u.lang = 'ru-RU';
     u.rate = 0.9;
     u.pitch = 1.05;
     speechSynthesis.speak(u);
@@ -177,6 +198,24 @@ function shuffle(arr) {
   }
   return a;
 }
+
+// Плавающие фигурки на фоне — на каждой странице, для настроения
+(function decor() {
+  const shapes = ['☀️', '☁️', '⭐', '🌈', '🎈', '☁️', '⭐'];
+  const layer = document.createElement('div');
+  layer.className = 'bg-decor';
+  shapes.forEach((s, i) => {
+    const el = document.createElement('span');
+    el.textContent = s;
+    el.style.left = 6 + i * 14 + Math.random() * 7 + '%';
+    el.style.top = 4 + Math.random() * 82 + '%';
+    el.style.fontSize = 26 + Math.random() * 40 + 'px';
+    el.style.animationDelay = Math.random() * 3 + 's';
+    el.style.animationDuration = 5 + Math.random() * 5 + 's';
+    layer.appendChild(el);
+  });
+  document.body.appendChild(layer);
+})();
 
 // Service Worker: офлайн-режим после первой загрузки.
 // Путь считаем от src этого скрипта (js/core.js) — работает с любой глубины страниц.

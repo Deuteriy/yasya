@@ -1,5 +1,5 @@
 // Service Worker: кэшируем приложение целиком — офлайн-работа на iPad
-const CACHE = 'yasya-v2';
+const CACHE = 'yasya-v3';
 // Пути относительные: приложение живёт в подкаталоге на GitHub Pages
 // (username.github.io/Yasya/), абсолютные "/..." ломались бы.
 const ASSETS = [
@@ -12,6 +12,16 @@ const ASSETS = [
   './assets/icons/icon-180.png',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
+  './assets/fonts/nunito-cyrillic.woff2',
+  './assets/fonts/nunito-latin.woff2',
+  './assets/sounds/cow.wav',
+  './assets/sounds/dog.wav',
+  './assets/sounds/cat.wav',
+  './assets/sounds/sheep.wav',
+  './assets/sounds/pig.wav',
+  './assets/sounds/horse.wav',
+  './assets/sounds/rooster.wav',
+  './assets/sounds/chicken.wav',
   './games/colors/index.html',
   './games/memory/index.html',
   './games/count/index.html',

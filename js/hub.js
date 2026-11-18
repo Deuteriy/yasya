@@ -27,11 +27,35 @@ function openPanel() {
         <span>🔊 Звук</span>
         <button class="switch ${Settings.soundOn() ? 'on' : ''}" id="sound"></button>
       </div>
+      <div class="panel__row">
+        <span>🗣 Голос</span>
+        <select class="select" id="voice"></select>
+      </div>
       <div class="panel__row"><span>⭐ Звёздочек: ${Progress.get('global', 'stars')}</span></div>
       <button class="btn" id="reset">🗑 Сбросить прогресс</button>
       <button class="btn" id="close">Закрыть</button>
     </div>`;
   document.body.appendChild(panel);
+
+  // список русских голосов системы (на iPad ещё скачиваются в Настройки → Универсальный доступ)
+  const voiceSel = panel.querySelector('#voice');
+  const fillVoices = () => {
+    const ru = speechSynthesis.getVoices().filter((v) => v.lang.startsWith('ru'));
+    voiceSel.innerHTML =
+      '<option value="">По умолчанию</option>' +
+      ru.map((v) => `<option value="${v.voiceURI}">${v.name}</option>`).join('');
+    voiceSel.value = Settings.voiceURI();
+    if (!ru.length) {
+      voiceSel.innerHTML = '<option value="">Русских голосов нет</option>';
+      voiceSel.disabled = true;
+    }
+  };
+  fillVoices();
+  speechSynthesis.addEventListener('voiceschanged', fillVoices);
+  voiceSel.addEventListener('change', () => {
+    Settings.setVoice(voiceSel.value);
+    speak('Привет! Это мой голос.'); // сразу послушать выбор
+  });
 
   panel.querySelector('#sound').addEventListener('click', (e) => {
     const on = !Settings.soundOn();
