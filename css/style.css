@@ -653,18 +653,10 @@ body {
   pointer-events: none;
 }
 
-.outline svg {
+.outline img {
   display: block;
   width: 100%;
   height: 100%;
-}
-
-.outline .fillzone {
-  fill: none;
-  stroke: #6b5540;
-  stroke-width: 4.5;
-  stroke-linejoin: round;
-  stroke-linecap: round;
 }
 
 .palette {

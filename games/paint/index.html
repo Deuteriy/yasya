@@ -29,100 +29,87 @@
   </main>
   <script src="../../js/core.js"></script>
   <script>
-    // Контурные картинки: области соприкасаются краями, не пересекаясь,
-    // чтобы линии не создавали кашу под пальцем
+    // Пул картинок: эмодзи превращается в контур для раскраски автоматически
+    // (обводка силуэта + внутренних цветовых зон), поэтому рисунки узнаваемые
     const PICTURES = [
-      { e: '🏠', name: 'Домик', svg: `
-        <polygon class="fillzone" points="100,14 182,88 18,88"/>
-        <rect class="fillzone" x="36" y="88" width="128" height="88"/>
-        <circle class="fillzone" cx="68" cy="122" r="15"/>
-        <rect class="fillzone" x="86" y="132" width="32" height="44" rx="3"/>` },
-      { e: '🎄', name: 'Ёлочка', svg: `
-        <rect class="fillzone" x="88" y="150" width="24" height="34" rx="3"/>
-        <polygon class="fillzone" points="100,18 64,62 136,62"/>
-        <polygon class="fillzone" points="100,64 46,108 154,108"/>
-        <polygon class="fillzone" points="100,110 28,148 172,148"/>` },
-      { e: '🌸', name: 'Цветочек', svg: `
-        <rect class="fillzone" x="96" y="118" width="8" height="64" rx="4"/>
-        <ellipse class="fillzone" cx="80" cy="152" rx="20" ry="10" transform="rotate(-35 80 152)"/>
-        <circle class="fillzone" cx="100" cy="50" r="19"/>
-        <circle class="fillzone" cx="134" cy="75" r="19"/>
-        <circle class="fillzone" cx="121" cy="115" r="19"/>
-        <circle class="fillzone" cx="79" cy="115" r="19"/>
-        <circle class="fillzone" cx="66" cy="75" r="19"/>
-        <circle class="fillzone" cx="100" cy="86" r="14"/>` },
-      { e: '🐟', name: 'Рыбка', svg: `
-        <polygon class="fillzone" points="138,100 190,64 184,136"/>
-        <polygon class="fillzone" points="78,66 92,40 106,66"/>
-        <ellipse class="fillzone" cx="86" cy="100" rx="52" ry="34"/>
-        <circle class="fillzone" cx="52" cy="92" r="8"/>` },
-      { e: '🦋', name: 'Бабочка', svg: `
-        <ellipse class="fillzone" cx="58" cy="70" rx="34" ry="28"/>
-        <ellipse class="fillzone" cx="142" cy="70" rx="34" ry="28"/>
-        <ellipse class="fillzone" cx="58" cy="134" rx="34" ry="28"/>
-        <ellipse class="fillzone" cx="142" cy="134" rx="34" ry="28"/>
-        <ellipse class="fillzone" cx="100" cy="100" rx="11" ry="44"/>` },
-      { e: '🚗', name: 'Машинка', svg: `
-        <path class="fillzone" d="M56 104 L76 70 H124 L144 104 Z"/>
-        <rect class="fillzone" x="20" y="104" width="160" height="34" rx="12"/>
-        <rect class="fillzone" x="82" y="76" width="36" height="24" rx="4"/>
-        <circle class="fillzone" cx="56" cy="156" r="18"/>
-        <circle class="fillzone" cx="144" cy="156" r="18"/>` },
-      { e: '🚀', name: 'Ракета', svg: `
-        <polygon class="fillzone" points="72,110 40,160 72,160"/>
-        <polygon class="fillzone" points="128,110 160,160 128,160"/>
-        <polygon class="fillzone" points="100,14 128,70 128,150 72,150 72,70"/>
-        <circle class="fillzone" cx="100" cy="92" r="16"/>
-        <polygon class="fillzone" points="84,150 116,150 100,194"/>` },
-      { e: '🌳', name: 'Дерево', svg: `
-        <rect class="fillzone" x="88" y="130" width="24" height="56" rx="4"/>
-        <circle class="fillzone" cx="100" cy="78" r="52"/>
-        <circle class="fillzone" cx="78" cy="66" r="9"/>
-        <circle class="fillzone" cx="124" cy="84" r="9"/>
-        <circle class="fillzone" cx="92" cy="100" r="8"/>` },
-      { e: '🍄', name: 'Грибок', svg: `
-        <path class="fillzone" d="M28 110 A72 60 0 0 1 172 110 Z"/>
-        <rect class="fillzone" x="76" y="112" width="48" height="62" rx="10"/>
-        <circle class="fillzone" cx="75" cy="80" r="8"/>
-        <circle class="fillzone" cx="118" cy="72" r="7"/>
-        <circle class="fillzone" cx="100" cy="95" r="6"/>` },
-      { e: '☀️', name: 'Солнышко', svg: `
-        <circle class="fillzone" cx="100" cy="100" r="38"/>
-        <polygon class="fillzone" points="140,90 168,100 140,110"/>
-        <polygon class="fillzone" points="121.2,135.4 148.1,148.1 135.4,121.2"/>
-        <polygon class="fillzone" points="90,140 100,168 110,140"/>
-        <polygon class="fillzone" points="78.8,135.4 51.9,148.1 64.6,121.2"/>
-        <polygon class="fillzone" points="60,90 32,100 60,110"/>
-        <polygon class="fillzone" points="78.8,64.6 51.9,51.9 64.6,78.8"/>
-        <polygon class="fillzone" points="110,60 100,32 90,60"/>
-        <polygon class="fillzone" points="121.2,64.6 148.1,51.9 135.4,78.8"/>` },
-      { e: '🍦', name: 'Мороженое', svg: `
-        <circle class="fillzone" cx="100" cy="70" r="40"/>
-        <polygon class="fillzone" points="60,110 140,110 100,190"/>
-        <circle class="fillzone" cx="100" cy="22" r="8"/>` },
-      { e: '🧁', name: 'Кексик', svg: `
-        <ellipse class="fillzone" cx="100" cy="38" rx="6" ry="9"/>
-        <rect class="fillzone" x="96" y="46" width="8" height="30" rx="2"/>
-        <path class="fillzone" d="M52 118 A48 42 0 0 1 148 118 Z"/>
-        <polygon class="fillzone" points="62,118 138,118 152,172 48,172"/>` },
-      { e: '⛵', name: 'Кораблик', svg: `
-        <polygon class="fillzone" points="28,138 172,138 150,170 50,170"/>
-        <rect class="fillzone" x="96" y="48" width="8" height="90"/>
-        <polygon class="fillzone" points="106,54 106,130 168,130"/>
-        <polygon class="fillzone" points="104,48 134,56 104,64"/>` },
-      { e: '🍎', name: 'Яблоко', svg: `
-        <circle class="fillzone" cx="100" cy="112" r="54"/>
-        <rect class="fillzone" x="96" y="30" width="8" height="28" rx="3"/>
-        <ellipse class="fillzone" cx="122" cy="46" rx="16" ry="9" transform="rotate(-30 122 46)"/>` },
-      { e: '🎈', name: 'Шарик', svg: `
-        <ellipse class="fillzone" cx="100" cy="82" rx="44" ry="54"/>
-        <polygon class="fillzone" points="100,136 92,148 108,148"/>
-        <line class="fillzone" x1="92" y1="148" x2="86" y2="158"/>
-        <line class="fillzone" x1="108" y1="148" x2="114" y2="158"/>
-        <rect class="fillzone" x="84" y="158" width="32" height="26" rx="6"/>` },
-      { e: '❤️', name: 'Сердечко', svg: `
-        <path class="fillzone" d="M100 178 C 34 128 20 68 58 50 C 86 37 100 58 100 74 C 100 58 114 37 142 50 C 180 68 166 128 100 178 Z"/>` },
+      { e: '🐱', name: 'Кошечка' },
+      { e: '🐶', name: 'Собачка' },
+      { e: '🐰', name: 'Зайчик' },
+      { e: '🦊', name: 'Лисёнок' },
+      { e: '🐻', name: 'Мишка' },
+      { e: '🐸', name: 'Лягушка' },
+      { e: '🦆', name: 'Уточка' },
+      { e: '🦋', name: 'Бабочка' },
+      { e: '🐞', name: 'Божья коровка' },
+      { e: '🌻', name: 'Подсолнух' },
+      { e: '🌳', name: 'Дерево' },
+      { e: '🍎', name: 'Яблоко' },
+      { e: '🍓', name: 'Клубника' },
+      { e: '🚗', name: 'Машинка' },
+      { e: '🚀', name: 'Ракета' },
+      { e: '🎈', name: 'Шарик' },
     ];
+
+    // ===== Генератор контуров из эмодзи =====
+    const outlineCache = new Map();
+    function outlineURL(emoji) {
+      if (outlineCache.has(emoji)) return outlineCache.get(emoji);
+      const S = 560;
+      const c = document.createElement('canvas');
+      c.width = c.height = S;
+      const x = c.getContext('2d', { willReadFrequently: true });
+      x.font = Math.round(S * 0.78) +
+        'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif';
+      x.textAlign = 'center';
+      x.textBaseline = 'middle';
+      x.fillText(emoji, S / 2, S / 2 + S * 0.04);
+      const src = x.getImageData(0, 0, S, S).data;
+
+      const out = document.createElement('canvas');
+      out.width = out.height = S;
+      const octx = out.getContext('2d');
+      const od = octx.createImageData(S, S);
+      const D = od.data;
+      const edge = new Uint8Array(S * S);
+      const T = 70; // порог перепада: контур силуэта + границы цветов внутри
+
+      for (let y = 1; y < S - 1; y++) {
+        for (let xx = 1; xx < S - 1; xx++) {
+          const i = (y * S + xx) * 4;
+          const ir = i + 4;      // сосед справа
+          const id = i + S * 4;  // сосед снизу
+          const dA = Math.abs(src[i + 3] - src[ir + 3]) + Math.abs(src[i + 3] - src[id + 3]);
+          const dC =
+            Math.abs(src[i] - src[ir]) + Math.abs(src[i + 1] - src[ir + 1]) +
+            Math.abs(src[i + 2] - src[ir + 2]) + Math.abs(src[i] - src[id]) +
+            Math.abs(src[i + 1] - src[id + 1]) + Math.abs(src[i + 2] - src[id + 2]);
+          if (dA + dC * 0.45 > T) edge[y * S + xx] = 1;
+        }
+      }
+
+      // утолщаем линии (радиус 2) и красим тёмно-коричневым
+      for (let y = 0; y < S; y++) {
+        for (let xx = 0; xx < S; xx++) {
+          if (!edge[y * S + xx]) continue;
+          for (let dy = -2; dy <= 2; dy++) {
+            for (let dx = -2; dx <= 2; dx++) {
+              const yy = y + dy;
+              const x2 = xx + dx;
+              if (yy < 0 || x2 < 0 || yy >= S || x2 >= S) continue;
+              const j = (yy * S + x2) * 4;
+              D[j] = 74;
+              D[j + 1] = 59;
+              D[j + 2] = 42;
+              D[j + 3] = 255;
+            }
+          }
+        }
+      }
+      octx.putImageData(od, 0, 0);
+      const url = out.toDataURL();
+      outlineCache.set(emoji, url);
+      return url;
+    }
 
     const COLORS = [
       '#ff5a5f', '#ff9f43', '#ffd93d', '#6bcb77',
@@ -163,7 +150,7 @@
 
     function openPicture(p) {
       title.textContent = p.name;
-      outline.innerHTML = `<svg viewBox="0 0 200 200" class="paint-svg">${p.svg}</svg>`;
+      outline.innerHTML = `<img src="${outlineURL(p.e)}" alt="">`;
       strokes.length = 0;
       current = null;
       picker.hidden = true;
