@@ -42,18 +42,32 @@
 
     const zoo = document.getElementById('zoo');
     const heard = new Set();
-    let currentAudio = null;
+    let busy = false; // пока играет звук зверя и его имя — новые тапы не принимаются
 
-    function playAnimal(a) {
-      if (!Settings.soundOn()) return;
-      // быстрое повторное тыканье: глушим предыдущую дорожку
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio = null;
-      }
-      const audio = new Audio(`../../assets/sounds/${a.file}.wav`);
-      currentAudio = audio;
-      audio.play().catch(() => {}); // если не смог — имя всё равно произнесётся
+    // играет файл; onEnd — по ended/error/страховочному таймауту
+    function playSeq(src, onEnd, maxMs) {
+      const a = new Audio(src);
+      let done = false;
+      const fin = () => {
+        if (done) return;
+        done = true;
+        onEnd();
+      };
+      a.addEventListener('ended', fin);
+      a.addEventListener('error', fin);
+      setTimeout(fin, maxMs);
+      a.play().catch(fin);
+    }
+
+    function checkAllHeard() {
+      if (heard.size !== ANIMALS.length) return;
+      // всех послушали — праздник; потом начинаем заново
+      showWin({
+        onAgain: () => {
+          heard.clear();
+          zoo.querySelectorAll('.animal').forEach((el) => el.classList.remove('is-heard'));
+        },
+      });
     }
 
     ANIMALS.forEach((a) => {
@@ -61,21 +75,29 @@
       b.className = 'animal';
       b.innerHTML = `${a.e}<small>${a.name}</small>`;
       b.addEventListener('click', () => {
-        playAnimal(a);
-        setTimeout(() => speak(a.name), 250); // имя поверх звука, не одновременно
+        if (busy) return; // троттлинг: пока играет — ждём
         heard.add(a.file);
         b.classList.add('is-heard');
-        if (heard.size === ANIMALS.length) {
-          // всех послушали — праздник; потом начинаем заново
-          setTimeout(() => {
-            showWin({
-              onAgain: () => {
-                heard.clear();
-                zoo.querySelectorAll('.animal').forEach((el) => el.classList.remove('is-heard'));
-              },
-            });
-          }, 900);
+        if (!Settings.soundOn()) {
+          checkAllHeard();
+          return;
         }
+        busy = true;
+        // сначала голос зверя, имя — когда звук закончился
+        playSeq(
+          `../../assets/sounds/${a.file}.wav`,
+          () => {
+            playSeq(
+              `../../assets/voice/${fnv1a(a.name)}.mp3`,
+              () => {
+                busy = false;
+                checkAllHeard();
+              },
+              3000
+            );
+          },
+          6000
+        );
       });
       zoo.appendChild(b);
     });
