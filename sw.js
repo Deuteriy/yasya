@@ -1,5 +1,5 @@
 // Service Worker: кэшируем приложение целиком — офлайн-работа на iPad
-const CACHE = 'yasya-v12';
+const CACHE = 'yasya-v13';
 // список озвучек (assets/voice/*.mp3) — генерируется voicegen/batch_yasya.py
 importScripts('./assets/voice/manifest.js');
 // Пути относительные: приложение живёт в подкаталоге на GitHub Pages
@@ -48,13 +48,22 @@ const ASSETS = [
   './games/pattern/index.html',
   './games/maze/index.html',
   './games/piano/index.html',
+  './games/abc/index.html',
+  // Звуки букв (assets/abc/*.wav) сюда НЕ кладём: они догружаются при
+  // первом открытии Азбуки (см. прогрев в games/abc) и кэшируются на лету.
   './assets/voice/manifest.js',
   ...VOICE_FILES,
 ];
 
 self.addEventListener('install', (event) => {
+  // Кэшируем по одному файлу, а не addAll: addAll атомарен, и один
+  // сорвавшийся запрос из ~120 отменял всю пачку — установка SW падала
+  // (в DevTools это выглядело как «отменённые mp3») и повторялась при
+  // каждом заходе. Недостающее дотянется fetch-хэндлером при первом использовании.
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE).then((cache) =>
+      Promise.allSettled(ASSETS.map((u) => cache.add(u)))
+    )
   );
   self.skipWaiting();
 });

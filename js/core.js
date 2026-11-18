@@ -269,6 +269,22 @@ function showStart({ emoji = '▶️', label = 'Играть', onStart }) {
   });
 }
 
+// Играет аудиофайл; onEnd — по ended/error/страховочному таймауту.
+// Общая для игр с последовательностями «звук → имя».
+function playSeq(src, onEnd, maxMs = 6000) {
+  const a = new Audio(src);
+  let done = false;
+  const fin = () => {
+    if (done) return;
+    done = true;
+    onEnd();
+  };
+  a.addEventListener('ended', fin);
+  a.addEventListener('error', fin);
+  setTimeout(fin, maxMs);
+  a.play().catch(fin);
+}
+
 // ===== Утилита =====
 function shuffle(arr) {
   const a = [...arr];

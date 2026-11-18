@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="stylesheet" href="../../css/style.css" />
+  <title>Азбука</title>
+</head>
+<body>
+  <main class="game">
+    <div class="game__top">
+      <a class="game__home" href="../../index.html" aria-label="Домой">🏠</a>
+      <button class="game__speak" id="mode" aria-label="Найти букву">🎯</button>
+    </div>
+    <h1 class="game__task" id="title">Азбука</h1>
+    <div class="game__stage">
+      <div class="abc-grid" id="grid"></div>
+      <div class="abc-quiz" id="quiz" hidden>
+        <div class="options" id="opts"></div>
+      </div>
+    </div>
+  </main>
+  <script src="../../js/core.js"></script>
+  <script>
+    // Буква: как читается вслух (имя буквы) + слово-картинка.
+    // Ъ, Ы, Ь — без слов.
+    const LETTERS = [
+      { l: 'А', say: 'а', word: 'Арбуз', e: '🍉' },
+      { l: 'Б', say: 'бэ', word: 'Банан', e: '🍌' },
+      { l: 'В', say: 'вэ', word: 'Волк', e: '🐺' },
+      { l: 'Г', say: 'гэ', word: 'Гриб', e: '🍄' },
+      { l: 'Д', say: 'дэ', word: 'Дом', e: '🏠' },
+      { l: 'Е', say: 'е', word: 'Енот', e: '🦝' },
+      { l: 'Ё', say: 'ё', word: 'Ёжик', e: '🦔' },
+      { l: 'Ж', say: 'жэ', word: 'Жираф', e: '🦒' },
+      { l: 'З', say: 'зэ', word: 'Заяц', e: '🐰' },
+      { l: 'И', say: 'и', word: 'Индюк', e: '🦃' },
+      { l: 'Й', say: 'и краткое', word: 'Йогурт', e: '🥛' },
+      { l: 'К', say: 'ка', word: 'Кот', e: '🐱' },
+      { l: 'Л', say: 'эль', word: 'Лиса', e: '🦊' },
+      { l: 'М', say: 'эм', word: 'Мишка', e: '🐻' },
+      { l: 'Н', say: 'эн', word: 'Носорог', e: '🦏' },
+      { l: 'О', say: 'о', word: 'Облако', e: '☁️' },
+      { l: 'П', say: 'пэ', word: 'Пингвин', e: '🐧' },
+      { l: 'Р', say: 'эр', word: 'Ракета', e: '🚀' },
+      { l: 'С', say: 'эс', word: 'Слон', e: '🐘' },
+      { l: 'Т', say: 'тэ', word: 'Тигр', e: '🐯' },
+      { l: 'У', say: 'у', word: 'Утка', e: '🦆' },
+      { l: 'Ф', say: 'эф', word: 'Флаг', e: '🚩' },
+      { l: 'Х', say: 'ха', word: 'Хлеб', e: '🍞' },
+      { l: 'Ц', say: 'цэ', word: 'Цветок', e: '🌸' },
+      { l: 'Ч', say: 'че', word: 'Часы', e: '⏰' },
+      { l: 'Ш', say: 'ша', word: 'Шарик', e: '🎈' },
+      { l: 'Щ', say: 'ща', word: 'Щенок', e: '🐶' },
+      { l: 'Ъ', say: 'твёрдый знак' },
+      { l: 'Ы', say: 'ы' },
+      { l: 'Ь', say: 'мягкий знак' },
+      { l: 'Э', say: 'э', word: 'Эскимо', e: '🍦' },
+      { l: 'Ю', say: 'ю', word: 'Юла', e: '🪀' },
+      { l: 'Я', say: 'я', word: 'Яблоко', e: '🍎' },
+    ];
+    const WITH_WORDS = LETTERS.filter((x) => x.word);
+    const QUIZ_ROUNDS = 5;
+
+    const grid = document.getElementById('grid');
+    const quizEl = document.getElementById('quiz');
+    const optsEl = document.getElementById('opts');
+    const titleEl = document.getElementById('title');
+    let mode = 'explore'; // explore | quiz
+    let round = 0;
+    let busy = false; // говорит карточка — клики не принимаются
+
+    // Звук буквы — записи с Wikimedia Commons («Буква А.wav» и т.д.)
+    const letterWav = (item) => `../../assets/abc/${item.l}.wav`;
+
+    // Прогрев: при открытии игры качаем звуки букв в фоне — SW положит
+    // их в кэш (в предустановку они не входят), дальше Азбука и офлайн работает.
+    LETTERS.forEach((x) => fetch(letterWav(x)).catch(() => {}));
+
+    // ===== Большая карточка: буква → слово =====
+    function showCard(item, onClose) {
+      const card = document.createElement('div');
+      card.className = 'abc-card';
+      card.innerHTML = `
+        <div class="abc-card__letter">${item.l}</div>
+        ${
+          item.word
+            ? `<div class="abc-card__word"><span class="e">${item.e}</span> ${item.l} — ${item.word}</div>`
+            : `<div class="abc-card__word">${item.l}</div>`
+        }`;
+      document.body.appendChild(card);
+
+      const close = () => {
+        card.remove();
+        busy = false;
+        if (onClose) onClose();
+      };
+      // тап — закрыть раньше конца озвучки
+      card.addEventListener('pointerdown', () => close(), { once: true });
+
+      // озвучиваем только букву; слово показываем картинкой и текстом
+      busy = true;
+      playSeq(letterWav(item), close, 5000);
+    }
+
+    // ===== Режим «учим»: сетка всех букв =====
+    LETTERS.forEach((item) => {
+      const b = document.createElement('button');
+      b.className = 'abc-letter';
+      b.textContent = item.l;
+      b.addEventListener('click', () => {
+        if (busy) return;
+        playSound('pop');
+        showCard(item);
+      });
+      grid.appendChild(b);
+    });
+
+    // ===== Режим «найди букву» =====
+    let target = null;
+
+    function nextRound() {
+      busy = false;
+      target = WITH_WORDS[Math.floor(Math.random() * WITH_WORDS.length)];
+      titleEl.textContent = `Покажи букву «${target.l}» ${round + 1}/${QUIZ_ROUNDS}`;
+      // задание звучит записью самой буквы («Буква Э»)
+      playSeq(letterWav(target), null, 5000);
+
+      optsEl.innerHTML = '';
+      shuffle([target, ...shuffle(WITH_WORDS.filter((x) => x !== target)).slice(0, 2)]).forEach(
+        (item) => {
+          const b = document.createElement('button');
+          b.className = 'abc-opt';
+          b.textContent = item.l;
+          b.addEventListener('click', () => {
+            if (busy) return;
+            if (item !== target) {
+              playSound('fail');
+              b.classList.add('shake');
+              setTimeout(() => b.classList.remove('shake'), 450);
+              return;
+            }
+            busy = true;
+            playSound('success');
+            round++;
+            showCard(item, () => {
+              if (round >= QUIZ_ROUNDS) {
+                showWin({ onAgain: startQuiz });
+              } else {
+                nextRound();
+              }
+            });
+          });
+          optsEl.appendChild(b);
+        }
+      );
+    }
+
+    function startQuiz() {
+      mode = 'quiz';
+      round = 0;
+      grid.hidden = true;
+      quizEl.hidden = false;
+      document.getElementById('mode').textContent = '🔤';
+      nextRound();
+    }
+
+    function startExplore() {
+      mode = 'explore';
+      grid.hidden = false;
+      quizEl.hidden = true;
+      titleEl.textContent = 'Азбука';
+      document.getElementById('mode').textContent = '🎯';
+    }
+
+    document.getElementById('mode').addEventListener('click', () => {
+      playSound('pop');
+      mode === 'explore' ? startQuiz() : startExplore();
+    });
+
+    showStart({ emoji: '🔤', label: '▶ Учить буквы', onStart: () => {} });
+  </script>
+</body>
+</html>

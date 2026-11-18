@@ -44,21 +44,6 @@
     const heard = new Set();
     let busy = false; // пока играет звук зверя и его имя — новые тапы не принимаются
 
-    // играет файл; onEnd — по ended/error/страховочному таймауту
-    function playSeq(src, onEnd, maxMs) {
-      const a = new Audio(src);
-      let done = false;
-      const fin = () => {
-        if (done) return;
-        done = true;
-        onEnd();
-      };
-      a.addEventListener('ended', fin);
-      a.addEventListener('error', fin);
-      setTimeout(fin, maxMs);
-      a.play().catch(fin);
-    }
-
     function checkAllHeard() {
       if (heard.size !== ANIMALS.length) return;
       // всех послушали — праздник; потом начинаем заново

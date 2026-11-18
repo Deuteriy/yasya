@@ -161,6 +161,7 @@ body {
 .tile:nth-child(14) { animation-delay: 0.70s; }
 .tile:nth-child(15) { animation-delay: 0.75s; }
 .tile:nth-child(16) { animation-delay: 0.80s; }
+.tile:nth-child(17) { animation-delay: 0.85s; }
 
 .tile:active {
   transform: scale(0.94);
@@ -189,6 +190,7 @@ body {
 .tile--pattern { background: linear-gradient(165deg, #bfe8ff, #58b6e8); }
 .tile--maze    { background: linear-gradient(165deg, #e0d2f5, #9d86d6); }
 .tile--piano   { background: linear-gradient(165deg, #c8f0dd, #62c99a); }
+.tile--abc     { background: linear-gradient(165deg, #ffd9a1, #ff8c5a); }
 
 @keyframes pop-in {
   from {
@@ -1127,6 +1129,96 @@ body {
     transform: translateX(-50%) translateY(-90px) rotate(14deg);
     opacity: 0;
   }
+}
+
+/* ===== Игра «Азбука» ===== */
+.abc-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  width: min(94vw, 780px);
+}
+
+.abc-letter {
+  aspect-ratio: 1;
+  border-radius: 18px;
+  border: 4px solid #fff;
+  background: linear-gradient(180deg, #ffffff, #fff4e2);
+  box-shadow: 0 8px 16px rgba(93, 64, 28, 0.14);
+  font: inherit;
+  font-weight: 1000;
+  font-size: clamp(22px, 5vmin, 42px);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.12s ease;
+}
+
+.abc-letter:active {
+  transform: scale(0.92);
+}
+
+.abc-opt {
+  width: clamp(100px, 20vmin, 170px);
+  aspect-ratio: 1;
+  border-radius: 26px;
+  border: 5px solid #fff;
+  background: linear-gradient(180deg, #ffffff, #fff4e2);
+  box-shadow: var(--shadow-pop);
+  font: inherit;
+  font-weight: 1000;
+  font-size: clamp(56px, 13vmin, 110px);
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.abc-opt:active {
+  transform: translateY(5px);
+  box-shadow: var(--shadow-pop-press);
+}
+
+/* большая карточка буквы */
+.abc-card {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(800px 600px at 50% -10%, #fff3d6 0%, rgba(255, 243, 214, 0) 60%),
+    rgba(253, 243, 231, 0.97);
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3vmin;
+  animation: fade-in 0.25s;
+}
+
+.abc-card__letter {
+  font-size: clamp(130px, 36vmin, 320px);
+  font-weight: 1000;
+  color: #6b4f33;
+  line-height: 1;
+  text-shadow: 0 8px 0 rgba(255, 255, 255, 0.85);
+  animation: bounce 1.2s ease-in-out infinite;
+}
+
+.abc-card__word {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: clamp(24px, 5.5vmin, 46px);
+  font-weight: 900;
+  background: #fff;
+  padding: 10px 30px;
+  border-radius: 26px;
+  border: 5px solid #fff;
+  box-shadow: 0 10px 22px rgba(93, 64, 28, 0.16);
+}
+
+.abc-card__word .e {
+  font-size: 1.25em;
 }
 
 /* ===== Стартовый экран ===== */
