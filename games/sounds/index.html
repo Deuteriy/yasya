@@ -71,6 +71,9 @@
       });
       zoo.appendChild(b);
     });
+
+    // старт по кнопке: её нажатие разблокирует озвучку на iOS
+    showStart({ emoji: '🐮', label: '▶ Слушать', onStart: () => speak('Кто живёт на дворе?') });
   </script>
 </body>
 </html>

@@ -189,6 +189,23 @@ function showWin({ homeUrl = '../../index.html', onAgain } = {}) {
   });
 }
 
+// Стартовый экран с большой кнопкой.
+// iOS разрешает озвучку только после касания: тап по кнопке разблокирует
+// речь, поэтому задание звучит уже в первом раунде, а не со второго.
+function showStart({ emoji = '▶️', label = 'Играть', onStart }) {
+  const over = document.createElement('div');
+  over.className = 'start';
+  over.innerHTML = `
+    <div class="start__emoji">${emoji}</div>
+    <button class="start__btn">${label}</button>`;
+  document.body.appendChild(over);
+  over.querySelector('.start__btn').addEventListener('click', () => {
+    over.remove();
+    playSound('pop');
+    if (onStart) onStart();
+  });
+}
+
 // ===== Утилита =====
 function shuffle(arr) {
   const a = [...arr];

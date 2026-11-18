@@ -1,5 +1,5 @@
 // Service Worker: кэшируем приложение целиком — офлайн-работа на iPad
-const CACHE = 'yasya-v3';
+const CACHE = 'yasya-v4';
 // Пути относительные: приложение живёт в подкаталоге на GitHub Pages
 // (username.github.io/Yasya/), абсолютные "/..." ломались бы.
 const ASSETS = [

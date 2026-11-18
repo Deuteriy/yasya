@@ -69,7 +69,8 @@
       startRound();
     }
 
-    startRound();
+    // старт по кнопке: её нажатие разблокирует озвучку на iOS
+    showStart({ emoji: '🌓', label: '▶ Играть', onStart: startRound });
   </script>
 </body>
 </html>

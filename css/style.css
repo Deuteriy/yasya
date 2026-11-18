@@ -573,6 +573,48 @@ body {
   box-shadow: var(--shadow-pop-press);
 }
 
+/* ===== Стартовый экран ===== */
+.start {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(800px 600px at 50% -10%, #fff3d6 0%, rgba(255, 243, 214, 0) 60%),
+    rgba(253, 243, 231, 0.96);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5vmin;
+  z-index: 40;
+  animation: fade-in 0.3s;
+}
+
+.start__emoji {
+  font-size: clamp(96px, 23vmin, 190px);
+  filter: drop-shadow(0 14px 16px rgba(93, 64, 28, 0.3));
+  animation: bounce 1.2s ease-in-out infinite;
+}
+
+.start__btn {
+  font: inherit;
+  font-weight: 1000;
+  font-size: clamp(26px, 5.2vmin, 42px);
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.22);
+  padding: 20px 52px;
+  border-radius: 32px;
+  border: 6px solid #fff;
+  background: linear-gradient(165deg, #ffd08a, #ff9a3d);
+  box-shadow: var(--shadow-pop);
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.start__btn:active {
+  transform: translateY(5px);
+  box-shadow: var(--shadow-pop-press);
+}
+
 /* ===== Экран победы ===== */
 .win {
   position: fixed;
