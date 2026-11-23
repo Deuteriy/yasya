@@ -18,12 +18,16 @@
     <div class="game__stage">
       <div class="paint-picker" id="picker"></div>
       <div class="paint-wrap" id="wrap" hidden>
-        <div class="easel">
-          <canvas id="cv"></canvas>
-          <div class="outline" id="outline"></div>
+        <div class="easel-slot" id="slot">
+          <div class="easel" id="easel">
+            <canvas id="cv"></canvas>
+            <div class="outline" id="outline"></div>
+          </div>
         </div>
-        <div class="palette" id="palette"></div>
-        <button class="btn" id="done">✨ Готово</button>
+        <div class="paint-side">
+          <div class="palette" id="palette"></div>
+          <button class="btn" id="done">✨ Готово</button>
+        </div>
       </div>
     </div>
   </main>
@@ -53,8 +57,13 @@
     // ===== Генератор контуров из эмодзи =====
     const outlineCache = new Map();
     function outlineURL(emoji) {
-      if (outlineCache.has(emoji)) return outlineCache.get(emoji);
-      const S = 560;
+      // Растр — по экрану: полотно занимает почти всю меньшую сторону (на retina
+      // физических пикселей вдвое больше). При растяжении растра линии толстели
+      // и становились «ступенчатыми».
+      const S = Math.min(1280, Math.max(800,
+        Math.round(Math.min(innerWidth, innerHeight) * (devicePixelRatio || 1) / 64) * 64));
+      const key = S + emoji;
+      if (outlineCache.has(key)) return outlineCache.get(key);
       const c = document.createElement('canvas');
       c.width = c.height = S;
       const x = c.getContext('2d', { willReadFrequently: true });
@@ -87,12 +96,14 @@
         }
       }
 
-      // утолщаем линии (радиус 2) и красим тёмно-коричневым
+      // утолщаем линии и красим тёмно-коричневым; радиус растёт с растром,
+      // чтобы на экране линия была одной толщины (~4px) на любом устройстве
+      const R = S > 960 ? 3 : 2;
       for (let y = 0; y < S; y++) {
         for (let xx = 0; xx < S; xx++) {
           if (!edge[y * S + xx]) continue;
-          for (let dy = -2; dy <= 2; dy++) {
-            for (let dx = -2; dx <= 2; dx++) {
+          for (let dy = -R; dy <= R; dy++) {
+            for (let dx = -R; dx <= R; dx++) {
               const yy = y + dy;
               const x2 = xx + dx;
               if (yy < 0 || x2 < 0 || yy >= S || x2 >= S) continue;
@@ -107,13 +118,16 @@
       }
       octx.putImageData(od, 0, 0);
       const url = out.toDataURL();
-      outlineCache.set(emoji, url);
+      outlineCache.set(key, url);
       return url;
     }
 
+    // порядок радуги: в портрете 2 ряда по 9, в альбомной — колонки по 3
     const COLORS = [
-      '#ff5a5f', '#ff9f43', '#ffd93d', '#6bcb77',
-      '#4d96ff', '#3f5fd8', '#c084fc', '#ff8fc7', '#a0714f',
+      '#ff5a5f', '#ff9f43', '#ffd93d', '#b5e650', '#6bcb77', '#2e8b57',
+      '#4ecdc4', '#7fd3ff', '#4d96ff',
+      '#3f5fd8', '#c084fc', '#ff8fc7', '#a0714f', '#e6bc8f', '#a9b2bf',
+      '#343440', '#ffffff',
     ];
 
     let color = COLORS[0];
@@ -123,6 +137,8 @@
 
     const cv = document.getElementById('cv');
     const ctx = cv.getContext('2d');
+    const slot = document.getElementById('slot');
+    const easel = document.getElementById('easel');
     const outline = document.getElementById('outline');
     const palette = document.getElementById('palette');
     const picker = document.getElementById('picker');
@@ -156,14 +172,16 @@
       picker.hidden = true;
       wrap.hidden = false;
       speak(`Раскрась ${p.acc}`);
-      // холст мог поменять размер — подгоняем
-      requestAnimationFrame(fit);
     }
 
     // ===== Холст =====
+    // Полотно — самый большой квадрат, влезающий в место рядом с палитрой.
+    // Размер считаем здесь, а не в CSS: палитра занимает разное число рядов.
     function fit() {
+      const size = Math.min(slot.clientWidth, slot.clientHeight);
+      if (!size) return;
+      easel.style.width = easel.style.height = size + 'px';
       const r = cv.getBoundingClientRect();
-      if (!r.width) return;
       const dpr = window.devicePixelRatio || 1;
       W = r.width;
       cv.width = Math.round(r.width * dpr);
@@ -274,8 +292,8 @@
       showPicker();
     });
 
-    // поворот iPad — перерисовать сохранённые штрихи под новый размер
-    window.addEventListener('resize', fit);
+    // поворот iPad / другое свободное место — подогнать полотно и перерисовать штрихи
+    new ResizeObserver(fit).observe(slot);
 
     showStart({ emoji: '🖍️', label: '▶ Раскрасить', onStart: () => { speak('Что будем раскрашивать?'); showPicker(); } });
   </script>
