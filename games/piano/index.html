@@ -36,7 +36,7 @@
     ];
     const keys = [];
     const pressed = new Set();
-    let won = false;
+    let celebrated = false;
     let playing = false;
 
     const piano = document.getElementById('piano');
@@ -80,14 +80,15 @@
       tone(NOTES[i].f);
       noteFly(key);
       pressed.add(i);
-      if (!won && pressed.size === NOTES.length) {
-        won = true;
-        setTimeout(() => showWin({
-          onAgain: () => {
-            pressed.clear();
-            won = false;
-          },
-        }), 600);
+      // все 8 клавиш нажаты — праздник, но игра не заканчивается:
+      // на пианино играют без конца, пока сам не уйдёт домой
+      if (!celebrated && pressed.size === NOTES.length) {
+        celebrated = true;
+        setTimeout(() => {
+          Progress.add('global', 'stars', 1);
+          playSound('success');
+          confetti();
+        }, 600);
       }
     }
 
